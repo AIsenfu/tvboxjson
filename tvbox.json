@@ -53,7 +53,7 @@
     "sites": [
         {
             "key": "Douban",
-            "name": "🌙晚安影视|请勿相信视频内广告",
+            "name": "🌙晚安影视┃请勿相信视频内广告",
             "type": 3,
             "api": "csp_Douban",
             "jar":"http://jar.yy.xn--dkw.xn--6qq986b3xl/m/jar?id=index;md5;94cc7730ebec586a25a1179bc4b2754b",
@@ -112,7 +112,7 @@
         },
         {
             "key": "Nmvod",
-            "name": "🍋柠檬丨蓝光",
+            "name": "🍋柠檬┃蓝光",
             "type": 3,
             "api": "csp_Nmvod",
             "playerType": 2,
@@ -121,7 +121,7 @@
         },
         {
             "key": "Moli",
-            "name": "☀利利丨弹幕",
+            "name": "☀利利┃弹幕",
             "type": 3,
             "searchable": 1,
             "api": "csp_AppGet",
@@ -133,7 +133,7 @@
         },
         {
             "key": "Shuzi",
-            "name": "🔢数字丨弹幕",
+            "name": "🔢数字┃弹幕",
             "type": 3,
             "quickSearch": 1,
             "api": "csp_AppGet",
@@ -145,7 +145,7 @@
         },
         {
             "key": "TTian",
-            "name": "☀天天丨影视",
+            "name": "☀天天┃影视",
             "type": 3,
             "api": "csp_TTian",
             "searchable": 1,
@@ -156,7 +156,7 @@
         },
         {
             "key": "Chaoliu",
-            "name": "🌊潮流丨影视",
+            "name": "🌊潮流┃影视",
             "type": 3,
             "jar": "https://play.iptv365.org/肥猫/spider.jar",
             "api": "csp_AppRJ",
@@ -164,7 +164,7 @@
         },
         {
             "key": "Shanying",
-            "name": "⚡闪影丨影视",
+            "name": "⚡闪影┃影视",
             "type": 3,
             "api": "csp_AppYs",
             "searchable": 1,
@@ -182,7 +182,7 @@
         },
         {
             "key": "Wexikanbot",
-            "name": "🤖ikbot丨影视",
+            "name": "🤖ikbot┃影视",
             "type": 3,
             "jar": "https://aisearch.cdn.bcebos.com/fileManager/40aicoLgDtklAyS8-ZZBrA/1765824347239XW9m5i.txt;md5;ca6d7be5c03091001488cbf33969f75d",
             "api": "csp_WexikanbotGuard",
@@ -191,7 +191,7 @@
         },
         {
             "key": "Rebo",
-            "name": "💡热播｜影视",
+            "name": "💡热播┃影视",
             "type": 3,
             "api": "csp_AppRJ",
             "searchable": 1,
@@ -203,7 +203,7 @@
         },
         {
             "key": "Gz360",
-            "name": "🍉瓜子｜影视",
+            "name": "🍉瓜子┃影视",
             "type": 3,
             "api": "csp_Gz360",
             "searchable": 1,
@@ -223,7 +223,7 @@
         },
         {
             "key": "Huohu",
-            "name": "🦊火狐丨弹幕",
+            "name": "🦊火狐┃弹幕",
             "type": 3,
             "quickSearch": 1,
             "api": "csp_AppGet",
@@ -236,7 +236,7 @@
         },
         {
             "key": "Jpys",
-            "name": "🏅金牌｜影视",
+            "name": "🏅金牌┃影视",
             "type": 3,
             "api": "csp_Jpys",
             "ext": "https://m.hkybqufgh.com,https://m.sizhengxt.com,https://m.9zhoukj.com,https://m.sizhengxt.com,https://m.jiabaide.cn"
@@ -253,7 +253,7 @@
         },
         {
             "key": "Yongle",
-            "name": "🧿永乐｜影视",
+            "name": "🧿永乐┃影视",
             "type": 3,
             "api": "csp_XBPQ",
             "jar": "https://ncstatic-file.clewm.net/rsrc/2025/0916/11/1275b576ff8340d0f20930745d5ac59c.jpg;md5;4d860d06ec233dbcb891b76055f099d5",
@@ -266,7 +266,7 @@
         },
         {
             "key": "Xiaozhen",
-            "name": "🧿小镇｜影视",
+            "name": "🧿小镇┃影视",
             "type": 3,
             "api": "csp_XBPQ",
             "jar": "https://ncstatic-file.clewm.net/rsrc/2025/0916/11/1275b576ff8340d0f20930745d5ac59c.jpg;md5;4d860d06ec233dbcb891b76055f099d5",
@@ -279,7 +279,7 @@
         },
         {
             "key": "Pianba",
-            "name": "🧿片吧｜影视",
+            "name": "🧿片吧┃影视",
             "type": 3,
             "api": "csp_XBPQ",
             "jar": "https://ncstatic-file.clewm.net/rsrc/2025/0916/11/1275b576ff8340d0f20930745d5ac59c.jpg;md5;4d860d06ec233dbcb891b76055f099d5",
@@ -307,7 +307,7 @@
         },
 		 {
             "key":"csp_wogg1",
-            "name":"🐲玩歌｜4K网盘",
+            "name":"🐲玩歌┃4K网盘",
             "type":3,
             "changeable":"0",
             "api":"csp_Duopan",
@@ -400,7 +400,7 @@
         },
         {
             "key": "Yuansao",
-            "name": "🐱元咲丨动漫",
+            "name": "🐱元咲┃动漫",
             "type": 3,
             "quickSearch": 1,
             "api": "csp_AppGet",
@@ -412,7 +412,7 @@
         },
         {
             "key": "Mifan",
-            "name": "🍚米饭｜动漫",
+            "name": "🍚米饭┃动漫",
             "type": 3,
             "quickSearch": 1,
             "api": "csp_AppGet",
