@@ -5,6 +5,13 @@
     "wallpaper": "https://imgs.catvod.com/",
     "warningText": "资源来自网络，无盈利纯技术分享！[所有内容仅供学习使用，请勿用于违法及商业用途，请勿付费购买]",
     "lives": [
+		{
+            "name": "山东青岛电信线路",
+            "type": 0,
+            "url": "https://bc.188766.xyz/?ip=&mima=bingcha1130&huikan=1",
+            "playerType": 2,
+            "ua": ""
+        },
         {
             "name": "冰茶tv线路",
             "type": 0,
