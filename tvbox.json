@@ -5,6 +5,13 @@
     "wallpaper": "https://imgs.catvod.com/",
     "warningText": "资源来自网络，无盈利纯技术分享！[所有内容仅供学习使用，请勿用于违法及商业用途，请勿付费购买]",
     "lives": [
+		{
+            "name": "首选线路",
+            "type": 0,
+            "url": "http://129.211.14.102:50085/sub?tv.sohu.blog=m3u",
+            "playerType": 2,
+            "ua": ""
+        },
         {
             "name": "冰茶tv线路",
             "type": 0,
