@@ -1,3 +1,2 @@
-浏览器 cf分流到InfinityFree部署的php网页
-tvbox cf分流到帽子云部署的静态网页获取配置文件index.html
+帽子云部署的静态网页获取配置文件index.html
 json用来备份
