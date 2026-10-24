@@ -1,0 +1,13 @@
+# 站点域名：key=地址，一行一个；换镜像域名只改这里，App 里填的链接不用动
+# 地址可写 https://www.x.com 或裸域名 www.x.com（vod.php 自动补 https://）
+guobayu=https://www.guobayu.com
+cupfox7=https://www.cupfox7.com
+mahuabox=https://www.mahuabox.com
+nfg=https://nfg.oddym.com
+kkjpliu=https://www.kkjpliu.com
+chicey=https://chicey.com
+# 特狗影视：真实后端 vr2.tegouzj.cloud（tcpdump 抓 TLS SNI 确认；MacCMS 结构）。
+# 当前被 Cloudflare 依 DMCA 裁定全站 451 下架；站点恢复或换镜像时只改这一行。
+tegou=https://vr2.tegouzj.cloud
+# 樱花影视：MacCMS v10 静态 HTML，官方 JSON 接口 404，靠页面抓取；换镜像只改这一行。
+tiaozhanjia=https://www.tiaozhanjia.com

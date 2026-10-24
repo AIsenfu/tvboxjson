@@ -1,0 +1,2449 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>晚安影视 · 站点管理器</title>
+<style>
+  :root{
+    --bg:#0d1016;
+    --bg2:#11151d;
+    --panel:rgba(26,30,40,.78);
+    --panel-2:rgba(20,24,32,.9);
+    --line:rgba(255,255,255,.08);
+    --line-2:rgba(255,255,255,.14);
+    --text:#e6e9f0;
+    --muted:#8d95a6;
+    --blue:#4ea1ff;
+    --blue-2:#2f7fe0;
+    --green:#3ddc97;
+    --red:#ff6b6b;
+    --amber:#ffc857;
+    --mono:'Cascadia Code','JetBrains Mono',Consolas,'Courier New',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family:'Segoe UI','PingFang SC','Microsoft YaHei',system-ui,sans-serif;
+    color:var(--text);
+    background:var(--bg);
+    background-image:
+      radial-gradient(1200px 600px at 10% -10%, rgba(78,161,255,.14), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(61,220,151,.10), transparent 55%),
+      linear-gradient(180deg,#0b0e13 0%,#0d1016 40%,#0b0e13 100%);
+    background-attachment:fixed;
+    min-height:100vh;
+    padding:22px;
+  }
+  .app{max-width:1560px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+
+  /* ---------- 顶栏 ---------- */
+  .topbar{
+    display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between;
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:18px 22px;backdrop-filter:blur(14px);
+    box-shadow:0 10px 40px rgba(0,0,0,.35);
+  }
+  .brand h1{font-size:22px;letter-spacing:.5px}
+  .brand h1 span{color:var(--blue)}
+  .brand p{margin-top:6px;font-size:13px;color:var(--muted);line-height:1.6}
+  .brand code,.notes code,.hint code{
+    font-family:var(--mono);font-size:12px;background:rgba(255,255,255,.07);
+    border:1px solid var(--line);padding:1px 6px;border-radius:5px;color:#cfe3ff;
+  }
+  .top-actions{display:flex;flex-wrap:wrap;gap:8px}
+  .btn{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:13px;color:var(--text);cursor:pointer;
+    background:rgba(255,255,255,.06);border:1px solid var(--line-2);
+    padding:9px 14px;border-radius:9px;transition:.16s ease;white-space:nowrap;
+    font-family:inherit;
+  }
+  .btn:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);transform:translateY(-1px)}
+  .btn:active{transform:translateY(0)}
+  .btn.primary{
+    background:linear-gradient(180deg,var(--blue),var(--blue-2));
+    border-color:rgba(78,161,255,.6);color:#fff;
+    box-shadow:0 6px 18px rgba(47,127,224,.32);
+  }
+  .btn.primary:hover{filter:brightness(1.08)}
+  .btn.green{background:rgba(61,220,151,.14);border-color:rgba(61,220,151,.4);color:#b6ffe2}
+  .btn.small{padding:6px 10px;font-size:12px;border-radius:7px}
+
+  /* ---------- 布局 ---------- */
+  .layout{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:16px}
+  @media (max-width:1180px){.layout{grid-template-columns:1fr}}
+  .panel{
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:16px 18px;backdrop-filter:blur(14px);
+    box-shadow:0 10px 40px rgba(0,0,0,.28);
+    display:flex;flex-direction:column;min-height:360px;
+  }
+  .panel.wide{min-height:0}
+  .panel-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:12px}
+  .panel-head h2{font-size:15px;font-weight:600;letter-spacing:.4px}
+  .count{
+    display:inline-block;min-width:22px;text-align:center;font-size:12px;
+    background:rgba(78,161,255,.18);border:1px solid rgba(78,161,255,.35);color:#bcdcff;
+    border-radius:20px;padding:1px 8px;margin-left:4px;
+  }
+  .hint{font-size:12px;color:var(--muted)}
+  .spacer{flex:1}
+
+  /* ---------- 站点卡片 ---------- */
+  .list{display:flex;flex-direction:column;gap:10px;overflow:auto;max-height:64vh;padding-right:4px}
+  .list::-webkit-scrollbar,.code::-webkit-scrollbar,.sheet::-webkit-scrollbar{width:10px;height:10px}
+  .list::-webkit-scrollbar-thumb,.code::-webkit-scrollbar-thumb,.sheet::-webkit-scrollbar-thumb{
+    background:rgba(255,255,255,.14);border-radius:8px;border:2px solid transparent;background-clip:content-box}
+  .card{
+    background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015));
+    border:1px solid var(--line);border-radius:12px;padding:12px 14px;transition:.16s ease;
+  }
+  .card:hover{border-color:rgba(255,255,255,.18)}
+  .card.flash{box-shadow:0 0 0 2px rgba(78,161,255,.55);border-color:var(--blue)}
+  .card-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;box-shadow:0 0 8px currentColor}
+  .dot.on{background:var(--green);color:var(--green)}
+  .dot.off{background:#555c6b;color:#555c6b;box-shadow:none}
+  .idx{font-size:11px;color:var(--muted);font-family:var(--mono);min-width:18px}
+  .badge{
+    font-family:var(--mono);font-size:12px;color:#bcdcff;
+    background:rgba(78,161,255,.13);border:1px solid rgba(78,161,255,.3);
+    border-radius:6px;padding:1px 7px;
+  }
+  .cname{font-size:14px;font-weight:600}
+  .curl{font-size:12px;color:var(--muted);font-family:var(--mono);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ops{margin-left:auto;display:flex;gap:4px}
+  .ops button{
+    width:26px;height:26px;line-height:1;border-radius:7px;cursor:pointer;font-size:12px;
+    background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--muted);transition:.15s;
+  }
+  .ops button:hover{background:rgba(255,255,255,.14);color:var(--text)}
+  .ops button.danger:hover{background:rgba(255,107,107,.2);border-color:rgba(255,107,107,.5);color:#ffb3b3}
+  .ops button.paste{color:#9fc6ff}
+  .card-paste{margin-top:10px;padding:10px 11px;border:1px dashed rgba(78,161,255,.4);border-radius:10px;background:rgba(78,161,255,.06)}
+  .card-paste textarea{min-height:84px;font-size:11.5px}
+  .card-paste .row{margin-top:8px}
+  .cp-info{font-size:12px;color:var(--muted)}
+  .cp-info.ok{color:#8ee6a8}
+  .cp-info.bad{color:#ff9b9b}
+  .fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px 10px;margin-top:11px}
+  @media (max-width:720px){.fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  .fields label{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted);letter-spacing:.3px}
+  .fields label.wide{grid-column:span 2}
+  .fields .chk-row{grid-column:span 2;display:flex;align-items:center;gap:16px;padding-top:14px}
+  .fields label.chk{flex-direction:row;align-items:center;gap:6px;font-size:12px;color:var(--text)}
+  .fields input[type=text],.fields input[type=number]{
+    font-family:var(--mono);font-size:12px;color:var(--text);
+    background:rgba(0,0,0,.32);border:1px solid var(--line-2);border-radius:7px;
+    padding:7px 9px;outline:none;transition:.15s;width:100%;
+  }
+  .fields input:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(78,161,255,.18)}
+  .fields input.bad{border-color:rgba(255,107,107,.75);box-shadow:0 0 0 2px rgba(255,107,107,.12)}
+  .fields input[type=checkbox]{width:15px;height:15px;accent-color:var(--blue);cursor:pointer}
+  .empty{
+    padding:34px 16px;text-align:center;color:var(--muted);font-size:13px;line-height:1.9;
+    border:1px dashed var(--line-2);border-radius:12px;
+  }
+
+  /* ---------- 校验提示 ---------- */
+  .valid{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+  .vitem{
+    font-size:12.5px;border-radius:8px;padding:8px 11px;line-height:1.5;cursor:pointer;
+    border:1px solid transparent;transition:.15s;
+  }
+  .vitem.err{background:rgba(255,107,107,.1);border-color:rgba(255,107,107,.35);color:#ffc9c9}
+  .vitem.ok{background:rgba(61,220,151,.08);border-color:rgba(61,220,151,.3);color:#a9f5d5}
+  .vitem:hover{filter:brightness(1.15)}
+
+  /* ---------- 生成结果 ---------- */
+  .tabs{display:flex;flex-wrap:wrap;gap:6px}
+  .tab{
+    font-size:12px;padding:6px 11px;border-radius:8px;cursor:pointer;color:var(--muted);
+    background:rgba(255,255,255,.04);border:1px solid var(--line);transition:.15s;font-family:var(--mono);
+  }
+  .tab:hover{color:var(--text);background:rgba(255,255,255,.09)}
+  .tab.active{color:#cfe3ff;background:rgba(78,161,255,.16);border-color:rgba(78,161,255,.45)}
+  .code{
+    margin-top:12px;flex:1;overflow:auto;max-height:64vh;min-height:260px;
+    font-family:var(--mono);font-size:12.5px;line-height:1.65;
+    background:rgba(0,0,0,.42);border:1px solid var(--line);border-radius:11px;
+    padding:14px 16px;white-space:pre;tab-size:4;color:#d7dbe6;
+  }
+  .code .tk-c{color:#6f7a8d;font-style:italic}
+  .code .tk-s{color:#9be89b}
+  .code .tk-v{color:#ffc857}
+  .code .tk-k{color:#8bb8ff}
+  .notes{margin-top:10px;font-size:12px;color:var(--muted);line-height:1.7}
+
+  /* ---------- 导入区 ---------- */
+  details.sec{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:0}
+  details.sec>summary{
+    cursor:pointer;padding:13px 16px;font-size:13.5px;font-weight:600;letter-spacing:.3px;
+    list-style:none;display:flex;align-items:center;gap:8px;color:#cfd6e3;
+  }
+  details.sec>summary::-webkit-details-marker{display:none}
+  details.sec>summary::before{content:'▸';color:var(--blue);transition:.2s;display:inline-block}
+  details.sec[open]>summary::before{transform:rotate(90deg)}
+  details.sec[open]>summary{border-bottom:1px solid var(--line)}
+  .sec-body{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+  .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .row .btn{font-size:12px;padding:7px 11px}
+  .sheet{
+    width:100%;min-height:120px;resize:vertical;font-family:var(--mono);font-size:12px;line-height:1.6;
+    color:var(--text);background:rgba(0,0,0,.35);border:1px solid var(--line-2);border-radius:9px;padding:11px 13px;outline:none;
+  }
+  .sheet:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(78,161,255,.16)}
+  .lead{font-size:12.5px;color:var(--muted);line-height:1.75}
+  .lead b{color:#cfd6e3;font-weight:600}
+  .lead ol{margin:4px 0 0 18px}
+  .lead li{margin:3px 0}
+
+  /* ---------- toast ---------- */
+  .toasts{position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:8px;z-index:99}
+  .toast{
+    min-width:180px;max-width:400px;font-size:13px;line-height:1.5;color:#e9edf5;
+    background:rgba(32,37,48,.96);border:1px solid var(--line-2);border-left:3px solid var(--blue);
+    border-radius:10px;padding:10px 14px;box-shadow:0 12px 34px rgba(0,0,0,.5);
+    animation:slidein .22s ease;
+  }
+  .toast.error{border-left-color:var(--red)}
+  .toast.ok{border-left-color:var(--green)}
+  .toast.has-action{display:flex;align-items:center;gap:12px}
+  .toast-act{
+    margin-left:auto;flex:none;cursor:pointer;font-size:12px;padding:4px 10px;border-radius:7px;
+    background:rgba(255,255,255,.1);border:1px solid var(--line-2);color:var(--text);transition:.15s;
+  }
+  .toast-act:hover{background:rgba(255,255,255,.2)}
+  /* 两段式确认态（不依赖 window.confirm） */
+  .ops button.armed{
+    width:auto;min-width:26px;padding:0 8px;white-space:nowrap;
+    background:rgba(255,107,107,.28);border-color:rgba(255,107,107,.6);color:#ffdede
+  }
+  .btn.armed{background:rgba(255,107,107,.28)!important;border-color:rgba(255,107,107,.6)!important;color:#ffdede!important}
+  @keyframes slidein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  /* ---------- 配置项 ---------- */
+  .cfg-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 12px}
+  @media (max-width:900px){.cfg-grid{grid-template-columns:1fr}}
+  .cfg-grid label{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted);letter-spacing:.3px}
+  .cfg-grid label.wide{grid-column:span 2}
+  .cfg-grid label.full{grid-column:1/-1}
+  .cfg-grid input{
+    font-family:var(--mono);font-size:12px;color:var(--text);
+    background:rgba(0,0,0,.32);border:1px solid var(--line-2);border-radius:7px;
+    padding:7px 9px;outline:none;width:100%;transition:.15s;
+  }
+  .cfg-grid input:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(78,161,255,.18)}
+  .cap{display:block;line-height:1.5}
+  .req{color:var(--amber);font-style:normal;margin-left:3px}
+  .opt{color:#6b7484;font-style:normal;margin-left:3px;font-size:10px}
+  .jed-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+  @media (max-width:980px){.jed-grid{grid-template-columns:1fr}}
+  .jed{background:rgba(0,0,0,.22);border:1px solid var(--line);border-radius:11px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+  .jed-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .jed-head b{font-family:var(--mono);font-size:12.5px;color:#bcdcff}
+  .jed-head .tag{font-size:11px;color:var(--muted)}
+  .jed-head .st{font-size:11px;font-family:var(--mono);color:var(--muted)}
+  .jed-head .st.bad{color:#ff9b9b}
+  .jed-head .st.ok{color:#8fe8bf}
+  .jed textarea{
+    width:100%;min-height:104px;resize:vertical;font-family:var(--mono);font-size:11.5px;line-height:1.6;
+    color:var(--text);background:rgba(0,0,0,.36);border:1px solid var(--line-2);border-radius:8px;
+    padding:9px 11px;outline:none;
+  }
+  .jed textarea:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(78,161,255,.16)}
+  .jed textarea.bad{border-color:rgba(255,107,107,.7)}
+  .imgprev{display:flex;align-items:center;gap:8px;margin-top:2px;min-height:20px;max-height:44px;overflow:hidden}
+  .imgprev img{width:40px!important;height:40px!important;max-width:40px!important;max-height:40px!important;border-radius:9px;object-fit:cover;border:1px solid var(--line-2);background:rgba(0,0,0,.35);flex:none}
+  .imgprev .imgmiss{font-size:10.5px;color:#6b7484}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <h1>晚安影视 · <span>站点管理器</span></h1>
+      <p>改一处，直接生成 App 配置 <code>index.html</code>（内容就是配置 JSON），外加本地自检用的 <code>server.js</code> SITES 片段。数据只存在本机浏览器，不上传。</p>
+    </div>
+    <div class="top-actions">
+      <button class="btn primary" id="btn-add">＋ 添加站点</button>
+      <button class="btn" id="btn-batch">批量添加</button>
+      <button class="btn" id="btn-paste-site">粘贴站点</button>
+      <button class="btn" id="btn-default">清空列表</button>
+      <button class="btn" id="btn-export">导出工程</button>
+      <label class="btn">导入工程<input type="file" id="file-project" accept=".json,application/json" hidden></label>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel">
+      <div class="panel-head">
+        <h2>站点列表<span class="count" id="site-count">0</span></h2>
+        <span class="spacer"></span>
+        <span class="hint">↑ ↓ 调顺序，⧉ 复制站点 JSON 到剪贴板，📋 粘贴站点数据，✕ 删除</span>
+      </div>
+      <div class="list" id="list"></div>
+      <div class="valid" id="valid"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>生成结果</h2>
+        <div class="tabs" id="tabs">
+          <div class="tab active" data-tab="index">index.html</div>
+          <div class="tab" data-tab="serverjs">server.js</div>
+        </div>
+        <span class="spacer"></span>
+        <button class="btn small green" id="btn-copy">复制</button>
+        <button class="btn small" id="btn-download">下载</button>
+      </div>
+      <pre class="code" id="code"></pre>
+      <div class="notes" id="tab-note"></div>
+    </section>
+  </main>
+
+  <section class="panel wide" id="cfg-panel">
+    <div class="panel-head">
+      <h2>配置项（写进 index.html）</h2>
+      <span class="hint"><i class="req">*</i> 只有 name 必填；spider / logo 这类留空就不写进文件</span>
+      <span class="spacer"></span>
+      <button class="btn small" id="btn-cfg-default">恢复默认</button>
+    </div>
+    <div class="cfg-grid" id="cfg-meta"></div>
+    <div class="jed-grid" id="cfg-editors"></div>
+  </section>
+
+  <section class="panel wide">
+    <details class="sec">
+      <summary>导入现有文件（index.html / vod.php / site.txt / server.js）</summary>
+      <div class="sec-body">
+        <div class="lead">
+          选文件或粘贴内容，自动识别类型。<b>导入 index.html（配置 JSON）会整份覆盖站点列表和其它配置段</b>；导入 site.txt / server.js 则按 key 合并（只更新域名、关键词、源目录这些字段）。
+        </div>
+        <div class="row">
+          <label class="btn">读 index.html / 配置<input type="file" id="f-config" accept=".html,.json,.txt" hidden></label>
+          <label class="btn">读 vod.php（旧）<input type="file" id="f-vodphp" accept=".php,.txt" hidden></label>
+          <label class="btn">读 site.txt（旧）<input type="file" id="f-sitetxt" accept=".txt,.conf" hidden></label>
+          <label class="btn">读 server.js<input type="file" id="f-serverjs" accept=".js,.txt" hidden></label>
+          <button class="btn" id="btn-fetch-config">从本目录拉 index.html</button>
+        </div>
+        <textarea class="sheet" id="paste-area" placeholder="也可以直接把 index.html / 配置 JSON / 旧 vod.php / site.txt / server.js 的内容粘贴到这里……"></textarea>
+        <div class="row">
+          <button class="btn primary" id="btn-paste-import">识别并导入</button>
+          <span class="hint">支持带 BOM、注释、尾随逗号的 JSON，也能识别旧格式</span>
+        </div>
+      </div>
+    </details>
+
+    <details class="sec">
+      <summary>批量添加（一行一个站点）</summary>
+      <div class="sec-body">
+        <div class="lead">
+          每行写 <code>key,名称,域名[,脚本文件名][,搜索关键词]</code>，也可以用竖线 <code>|</code> 或制表符分隔；<b>只写域名</b>时 key 自动取域名主干（如 <code>www.xxx.com</code> → <code>xxx</code>），文件名默认 <code>{key}.js</code>。
+        </div>
+        <textarea class="sheet" id="batch-area" placeholder="示例：
+new1,新站一,https://www.new1.com
+new2|新站二|www.new2.com|new2.js|庆余年
+https://www.new3.com"></textarea>
+        <div class="row">
+          <button class="btn primary" id="btn-batch-add">追加到列表</button>
+          <label class="fields-chk"><input type="checkbox" id="batch-replace"> 先清空现有列表</label>
+        </div>
+      </div>
+    </details>
+
+    <details class="sec" id="pastesite-sec">
+      <summary>直接粘贴站点（site JSON，一行一个或整段）</summary>
+      <div class="sec-body">
+        <div class="lead">
+          把 FongMi / TVBox 配置里的站点对象直接粘进来：<b>单个 <code>{...}</code></b>、<b>站点数组 <code>[{...},{...}]</code></b>、<b>整份配置</b>（自动取 <code>sites</code>），或者一行一个 JSON 都可以。认 <code>key / name / type / api / jar / ext / searchable / quickSearch / filterable / changeable / timeout</code>；<code>api</code> 是 <code>./js/xxx.js</code> 时自动转成「脚本文件」。
+        </div>
+        <textarea class="sheet" id="pastesite-area" placeholder='示例（直接粘一整段）：
+{"key":"Douban","name":"豆瓣精选","type":3,"api":"csp_NewDouBanGuard","searchable":0,"quickSearch":0,"jar":"http://…/spider.jar;md5;…"}
+
+或者数组 / 一行一个：
+[{"key":"a","name":"A站","api":"./js/a.js","ext":{"api":"https://www.a.com"}},
+ {"key":"b","name":"B站","api":"csp_XX","ext":"https://…/ext.txt"}]'></textarea>
+        <div class="row">
+          <button class="btn primary" id="btn-pastesite-add">解析并追加</button>
+          <button class="btn" id="btn-pastesite-replace">解析并替换列表</button>
+          <button class="btn" id="btn-pastesite-clip">从剪贴板读取</button>
+          <button class="btn" id="btn-pastesite-clear">清空</button>
+        </div>
+        <div class="valid" id="pastesite-info"><span class="hint">粘贴后这里显示识别结果</span></div>
+      </div>
+    </details>
+
+    <details class="sec">
+      <summary>怎么用 / 字段说明</summary>
+      <div class="sec-body lead">
+        <ol>
+          <li>改完站点和配置项后，右侧 <code>index.html</code> 就是 App 要读的配置（文件内容就是纯 JSON，不是网页）；「下载」后直接覆盖 <code>合集/index.html</code> 即可，静态空间也能托管。</li>
+          <li>要在本地自检台 <code>server.js</code> 里测到这站，把 <code>server.js</code> 标签里的片段粘进 <code>SITES</code> 数组。</li>
+          <li>浏览器不能直接写文件，所以给的都是「复制 / 下载」；粘贴回编辑器保存即可。</li>
+          <li>旧的 <code>vod.php</code> / <code>site.txt</code> 导入仍然可用（只在迁移时用得到）。</li>
+        </ol>
+        <p style="margin-top:10px"><b>站点字段：</b></p>
+        <ul style="margin-left:18px">
+          <li><b>key</b><i class="req">*</i>：唯一标识，字母/数字/下划线/短横线；也作为 server.js 的环境变量前缀。</li>
+          <li><b>名称</b><i class="req">*</i>：App 里显示的名字。</li>
+          <li><b>类型</b>：JSON 里的 <code>type</code>，纯 JS 脚本站固定 3。</li>
+          <li><b>脚本文件</b>：生成 <code>api: "./js/文件名"</code>；和 <b>api</b> 字段二选一，都空就报错。</li>
+          <li><b>api / jar</b>：手填完整 <code>api</code>（如 <code>csp_xxx</code>）或 <code>jar</code> 地址，给非本站脚本的源用。</li>
+          <li><b>域名</b>：写进 <code>ext.api</code>；换镜像时只改这里。</li>
+          <li><b>超时</b>：秒，5～120；聚合站类偏慢的给 30。</li>
+          <li><b>可搜索 / 快速搜索 / 可筛选 / 可切换</b>：对应 JSON 的 <code>searchable / quickSearch / filterable / changeable</code>，默认 1/1/0/1。</li>
+          <li><b>搜索关键词</b>、<b>环境变量</b>、<b>源目录</b>、<b>备注</b>：只给 <code>server.js</code> 自检和注释用，不进配置 JSON。</li>
+          <li><b>启用</b>：取消勾选后不进 <code>index.html</code>，也不进 server.js。</li>
+        </ul>
+        <p style="margin-top:10px"><b>配置段（lives / parses / rules / doh / hosts / ijk / ads）：</b>直接是 JSON 数组文本，改完自动校验；格式错了不写进文件，按提示修。只有 <b>name</b> 是必填项，其余字段都可以不写。</p>
+      </div>
+    </details>
+  </section>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+/* ==================================================================
+ * 晚安影视 · 站点管理器
+ * 纯前端单文件：不联网、不上传，数据存 localStorage
+ * ================================================================== */
+
+/* ------------------------------ 内置数据 ------------------------------ */
+
+/* 内置站点已取消：首次打开列表为空，用「+ 添加站点 / 批量添加 / 粘贴站点」或导入旧文件录入 */
+const DEFAULT_SITES = [];
+
+/* 全局配置项（对应 index.html 顶部的 name / notice / spider / logo / wallpaper / warningText） */
+const DEFAULT_META = {
+  "name": "晚安影视",
+  "notice": "晚安影视，免费分享",
+  "spider": "",
+  "logo": "",
+  "wallpaper": "",
+  "warningText": ""
+};
+
+/* 其它配置段：默认取参考配置里的对应部分，可在页面上逐段改 */
+const DEFAULT_SECTIONS = {
+  "lives": [
+    {
+      "name": "Kimentanm",
+      "type": 0,
+      "url": "https://gh.llkk.cc/https://raw.githubusercontent.com/Kimentanm/aptv/master/m3u/iptv.m3u",
+      "playerType": 2,
+      "ua": ""
+    },
+    {
+      "name": "咪咕线路",
+      "type": 0,
+      "url": "https://gh-proxy.org/https://raw.githubusercontent.com/develop202/migu_video/refs/heads/main/interface.txt",
+      "playerType": 2,
+      "ua": ""
+    },
+    {
+      "name": "develop202",
+      "type": 0,
+      "url": "https://gh.llkk.cc/http://raw.githubusercontent.com/develop202/migu_video/refs/heads/main/interface.txt",
+      "playerType": 2,
+      "epg": "http://diyp5.112114.xyz/?ch={name}&date={date}",
+      "logo": "https://epg.112114.xyz/logo/{name}.png",
+      "ua": ""
+    }
+  ],
+  "parses": [
+    {
+      "name": "解析1（腾讯/爱奇艺/芒果专属）",
+      "type": 0,
+      "url": "https://jx.xmflv.com/?url=",
+      "ext": {
+        "flag": [
+          "qq",
+          "腾讯",
+          "qiyi",
+          "爱奇艺",
+          "奇艺",
+          "youku",
+          "优酷",
+          "sohu",
+          "搜狐",
+          "letv",
+          "乐视",
+          "mgtv",
+          "芒果",
+          "芒果TV",
+          "tnmb",
+          "seven",
+          "bilibili",
+          "1905"
+        ]
+      }
+    },
+    {
+      "name": "解析2（高成功率通用）",
+      "type": 0,
+      "url": "https://jx.m3u8.tv/jiexi/?url=",
+      "ext": {
+        "header": {
+          "user-agent": "Mozilla/5.0 (Linux; Android 13; V2049A Build/TP1A.220624.014; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/116.0.0.0 Mobile Safari/537.36",
+          "referer": "https://jiejie.uk/"
+        }
+      }
+    },
+    {
+      "name": "解析3（备用通用解析）",
+      "type": 0,
+      "url": "https://t2.qlplayer.cyou/player/analysis.php?v="
+    },
+    {
+      "name": "解析4（基础通用解析）",
+      "type": 0,
+      "url": "https://huayong.net/999/?v="
+    },
+    {
+      "name": "解析5（手动切换备用1）",
+      "type": 1,
+      "url": "https://by1.nxog.eu.org/jx.php?ou=4c3&mz=0&url=",
+      "ext": {
+        "header": {
+          "user-agent": "Mozilla/5.0 (Linux; Android 13; V2049A Build/TP1A.220624.014; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/116.0.0.0 Mobile Safari/537.36"
+        }
+      }
+    },
+    {
+      "name": "解析6（手动切换备用2）",
+      "type": 1,
+      "url": "https://by1.nxog.eu.org/jx.php?ou=4c3&mz=1&url="
+    },
+    {
+      "name": "解析7（手动切换备用3）",
+      "type": 1,
+      "url": "https://by1.nxog.eu.org/jx.php?ou=4c3&mz=2&url="
+    },
+    {
+      "name": "解析8（手动切换备用4）",
+      "type": 1,
+      "url": "https://by1.nxog.eu.org/jx.php?ou=4c3&mz=3&url="
+    },
+    {
+      "name": "解析9（小众接口备用）",
+      "type": 1,
+      "url": "https://mfjx.iwsyy.xyz/?url="
+    },
+    {
+      "name": "解析10（CKPlayer专用解析）",
+      "type": 0,
+      "url": "http://www.ckplayer.vip/jiexi/?url=",
+      "ext": {
+        "header": {
+          "user-agent": "Mozilla/5.0 (Linux; Android 13; V2049A Build/TP1A.220624.014; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/116.0.0.0 Mobile Safari/537.36"
+        }
+      }
+    },
+    {
+      "name": "解析11（Yparse通用解析）",
+      "type": 0,
+      "url": "https://jx.yparse.com/index.php?url=",
+      "ext": {
+        "header": {
+          "user-agent": "Mozilla/5.0 (Linux; Android 13; V2049A Build/TP1A.220624.014; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/116.0.0.0 Mobile Safari/537.36"
+        }
+      }
+    },
+    {
+      "name": "解析12（Zyc888备用解析）",
+      "type": 0,
+      "url": "https://cdn.zyc888.top/?url="
+    },
+    {
+      "name": "解析13（BD通用解析）",
+      "type": 0,
+      "url": "https://bd.jx.cn/?url="
+    },
+    {
+      "name": "解析14（Ik9专用解析）",
+      "type": 0,
+      "url": "https://yparse.ik9.cc/index.php?url="
+    },
+    {
+      "name": "解析15（虾米2备用解析）",
+      "type": 0,
+      "url": "https://jx.xmflv.cc/?url="
+    },
+    {
+      "name": "解析16（HLS格式专用）",
+      "type": 0,
+      "url": "https://jx.hls.one/?url="
+    },
+    {
+      "name": "解析17（聚合解析入口）",
+      "type": 3,
+      "url": "Demo"
+    }
+  ],
+  "flags": [
+    "youku",
+    "优酷",
+    "优酷视频",
+    "qq",
+    "腾讯",
+    "腾讯视频",
+    "qiyi",
+    "iqiyi",
+    "奇艺",
+    "爱奇艺",
+    "m1905",
+    "xigua",
+    "leshi",
+    "letv",
+    "乐视",
+    "sohu",
+    "搜狐",
+    "搜狐视频",
+    "tudou",
+    "pptv",
+    "PPTV",
+    "mgtv",
+    "芒果",
+    "芒果TV",
+    "imgo",
+    "bilibili",
+    "哔哩",
+    "哔哩哔哩",
+    "migu"
+  ],
+  "rules": [
+    {
+      "name": "proxy",
+      "hosts": [
+        "raw.githubusercontent.com",
+        "googlevideo.com",
+        "cdn.v82u1l.com",
+        "cdn.iz8qkg.com",
+        "cdn.kin6c1.com",
+        "c.biggggg.com",
+        "c.olddddd.com",
+        "haiwaikan.com",
+        "www.histar.tv",
+        "youtube.com",
+        "uhibo.com",
+        ".*boku.*",
+        ".*nivod.*",
+        ".*ulivetv.*",
+        "cache.ott.*.itv.cmvideo.cn=base-v4-free-mghy.e.cdn.chinamobile.com",
+        "cache.ott.ystenlive.itv.cmvideo.cn=base-v4-free-mghy.e.cdn.chinamobile.com",
+        "cache.ott.bestlive.itv.cmvideo.cn=base-v4-free-mghy.e.cdn.chinamobile.com",
+        "cache.ott.wasulive.itv.cmvideo.cn=base-v4-free-mghy.e.cdn.chinamobile.com",
+        "cache.ott.fifalive.itv.cmvideo.cn=base-v4-free-mghy.e.cdn.chinamobile.com",
+        "cache.ott.hnbblive.itv.cmvideo.cn=base-v4-free-mghy.e.cdn.chinamobile.com"
+      ]
+    },
+    {
+      "name": "磁力广告",
+      "hosts": [
+        "magnet"
+      ],
+      "regex": [
+        "更多",
+        "社區",
+        "xuu",
+        "最新",
+        "直播",
+        "更新",
+        "社区",
+        "有趣",
+        "英皇体育",
+        "全中文AV在线",
+        "澳门皇冠赌场",
+        "哥哥快来",
+        "美女荷官",
+        "裸聊",
+        "新片首发",
+        "UUE29"
+      ]
+    },
+    {
+      "name": "七新嗅探",
+      "hosts": [
+        "api.52wyb.com"
+      ],
+      "regex": [
+        "m3u8?pt=m3u8"
+      ]
+    },
+    {
+      "name": "火山",
+      "hosts": [
+        "huoshan.com"
+      ],
+      "regex": [
+        "item_id="
+      ]
+    },
+    {
+      "name": "抖音",
+      "hosts": [
+        "douyin.com"
+      ],
+      "regex": [
+        "is_play_url="
+      ]
+    },
+    {
+      "name": "农民",
+      "hosts": [
+        "toutiaovod.com"
+      ],
+      "regex": [
+        "video/tos/cn"
+      ]
+    },
+    {
+      "name": "夜市",
+      "hosts": [
+        "yeslivetv.com"
+      ],
+      "script": [
+        "document.getElementsByClassName('vjs-big-play-button')[0].click()"
+      ]
+    },
+    {
+      "name": "毛驴点击",
+      "hosts": [
+        "www.maolvys.com"
+      ],
+      "script": [
+        "document.getElementsByClassName('swal-button swal-button--confirm')[0].click()"
+      ]
+    },
+    {
+      "name": "czzy",
+      "hosts": [
+        "10086.cn"
+      ],
+      "regex": [
+        "/storageWeb/servlet/downloadServlet"
+      ]
+    },
+    {
+      "name": "bdys",
+      "hosts": [
+        "bytetos.com",
+        "byteimg.com",
+        "bytednsdoc.com",
+        "pstatp.com"
+      ],
+      "regex": [
+        "/tos-cn"
+      ],
+      "exclude": [
+        ".m3u8"
+      ]
+    },
+    {
+      "name": "bdys10",
+      "hosts": [
+        "bdys10.com"
+      ],
+      "regex": [
+        "/obj/"
+      ],
+      "exclude": [
+        ".m3u8"
+      ]
+    },
+    {
+      "name": "饭团点击",
+      "hosts": [
+        "dadagui",
+        "freeok"
+      ],
+      "script": [
+        "document.querySelector(\"#playleft iframe\").contentWindow.document.querySelector(\"#start\").click();"
+      ]
+    },
+    {
+      "name": "ofiii",
+      "hosts": [
+        "www.ofiii.com"
+      ],
+      "script": [
+        "const play = document.getElementsByClassName('play_icon')[0], event = new MouseEvent('click', {bubbles:!0, cancelable:!0, view:window, screenX:100, screenY:100, clientX:50, clientY:50, button:0, shiftKey:!1, ctrlKey:!1, altKey:!1, metaKey:!1, modifierState:0}); play.dispatchEvent(event);"
+      ]
+    }
+  ],
+  "doh": [
+    {
+      "name": "Google",
+      "url": "https://dns.google/dns-query",
+      "ips": [
+        "8.8.4.4",
+        "8.8.8.8"
+      ]
+    },
+    {
+      "name": "Cloudflare",
+      "url": "https://cloudflare-dns.com/dns-query",
+      "ips": [
+        "1.1.1.1",
+        "1.0.0.1",
+        "2606:4700:4700::1111",
+        "2606:4700:4700::1001"
+      ]
+    },
+    {
+      "name": "AdGuard",
+      "url": "https://dns.adguard.com/dns-query",
+      "ips": [
+        "94.140.14.140",
+        "94.140.14.141"
+      ]
+    },
+    {
+      "name": "DNSWatch",
+      "url": "https://resolver2.dns.watch/dns-query",
+      "ips": [
+        "84.200.69.80",
+        "84.200.70.40"
+      ]
+    },
+    {
+      "name": "Quad9",
+      "url": "https://dns.quad9.net/dns-query",
+      "ips": [
+        "9.9.9.9",
+        "149.112.112.112"
+      ]
+    }
+  ],
+  "hosts": [
+    "cache.ott.*.itv.cmvideo.cn=base-v4-free-mghy.e.cdn.chinamobile.com",
+    "cache.ott.ystenlive.itv.cmvideo.cn=base-v4-free-mghy.e.cdn.chinamobile.com",
+    "cache.ott.bestlive.itv.cmvideo.cn=base-v4-free-mghy.e.cdn.chinamobile.com",
+    "cache.ott.wasulive.itv.cmvideo.cn=base-v4-free-mghy.e.cdn.chinamobile.com",
+    "cache.ott.fifalive.itv.cmvideo.cn=base-v4-free-mghy.e.cdn.chinamobile.com",
+    "cache.ott.hnbblive.itv.cmvideo.cn=base-v4-free-mghy.e.cdn.chinamobile.com"
+  ],
+  "ijk": [
+    {
+      "group": "软解码",
+      "options": [
+        {
+          "category": 4,
+          "name": "opensles",
+          "value": "0"
+        },
+        {
+          "category": 4,
+          "name": "overlay-format",
+          "value": "842225234"
+        },
+        {
+          "category": 4,
+          "name": "framedrop",
+          "value": "1"
+        },
+        {
+          "category": 4,
+          "name": "soundtouch",
+          "value": "1"
+        },
+        {
+          "category": 4,
+          "name": "start-on-prepared",
+          "value": "1"
+        },
+        {
+          "category": 1,
+          "name": "http-detect-range-support",
+          "value": "0"
+        },
+        {
+          "category": 1,
+          "name": "fflags",
+          "value": "fastseek"
+        },
+        {
+          "category": 2,
+          "name": "skip_loop_filter",
+          "value": "48"
+        },
+        {
+          "category": 4,
+          "name": "reconnect",
+          "value": "1"
+        },
+        {
+          "category": 4,
+          "name": "enable-accurate-seek",
+          "value": "0"
+        },
+        {
+          "category": 4,
+          "name": "mediacodec",
+          "value": "0"
+        },
+        {
+          "category": 4,
+          "name": "mediacodec-auto-rotate",
+          "value": "0"
+        },
+        {
+          "category": 4,
+          "name": "mediacodec-handle-resolution-change",
+          "value": "0"
+        },
+        {
+          "category": 4,
+          "name": "mediacodec-hevc",
+          "value": "0"
+        },
+        {
+          "category": 1,
+          "name": "dns_cache_timeout",
+          "value": "600000000"
+        }
+      ]
+    },
+    {
+      "group": "硬解码",
+      "options": [
+        {
+          "category": 4,
+          "name": "opensles",
+          "value": "0"
+        },
+        {
+          "category": 4,
+          "name": "overlay-format",
+          "value": "842225234"
+        },
+        {
+          "category": 4,
+          "name": "framedrop",
+          "value": "1"
+        },
+        {
+          "category": 4,
+          "name": "soundtouch",
+          "value": "1"
+        },
+        {
+          "category": 4,
+          "name": "start-on-prepared",
+          "value": "1"
+        },
+        {
+          "category": 1,
+          "name": "http-detect-range-support",
+          "value": "0"
+        },
+        {
+          "category": 1,
+          "name": "fflags",
+          "value": "fastseek"
+        },
+        {
+          "category": 2,
+          "name": "skip_loop_filter",
+          "value": "48"
+        },
+        {
+          "category": 4,
+          "name": "reconnect",
+          "value": "1"
+        },
+        {
+          "category": 4,
+          "name": "enable-accurate-seek",
+          "value": "0"
+        },
+        {
+          "category": 4,
+          "name": "mediacodec",
+          "value": "1"
+        },
+        {
+          "category": 4,
+          "name": "mediacodec-auto-rotate",
+          "value": "1"
+        },
+        {
+          "category": 4,
+          "name": "mediacodec-handle-resolution-change",
+          "value": "1"
+        },
+        {
+          "category": 4,
+          "name": "mediacodec-hevc",
+          "value": "1"
+        },
+        {
+          "category": 1,
+          "name": "dns_cache_timeout",
+          "value": "600000000"
+        }
+      ]
+    }
+  ],
+  "ads": [
+    "mozai.4gtv.tv",
+    "iqiyi.hbuioo.com",
+    "vip.ffzyad.com",
+    "wan.51img1.com",
+    "https://lf1-cdn-tos.bytegoofy.com/obj/tos-cn-i-dy/455ccf9e8ae744378118e4bd289288dd",
+    "mimg.0c1q0l.cn",
+    "www.googletagmanager.com",
+    "www.google-analytics.com",
+    "mc.usihnbcq.cn",
+    "mg.g1mm3d.cn",
+    "mscs.svaeuzh.cn",
+    "cnzz.hhttm.top",
+    "tp.vinuxhome.com",
+    "cnzz.mmstat.com",
+    "www.baihuillq.com",
+    "s23.cnzz.com",
+    "z3.cnzz.com",
+    "c.cnzz.com",
+    "stj.v1vo.top",
+    "z12.cnzz.com",
+    "img.mosflower.cn",
+    "tips.gamevvip.com",
+    "ehwe.yhdtns.com",
+    "xdn.cqqc3.com",
+    "www.jixunkyy.cn",
+    "sp.chemacid.cn",
+    "hm.baidu.com",
+    "s9.cnzz.com",
+    "z6.cnzz.com",
+    "um.cavuc.com",
+    "mav.mavuz.com",
+    "wofwk.aoidf3.com",
+    "z5.cnzz.com",
+    "xc.hubeijieshikj.cn",
+    "tj.tianwenhu.com",
+    "xg.gars57.cn",
+    "k.jinxiuzhilv.com",
+    "cdn.bootcss.com",
+    "ppl.xunzhuo123.com",
+    "xomk.jiangjunmh.top",
+    "img.xunzhuo123.com",
+    "z1.cnzz.com",
+    "s13.cnzz.com",
+    "xg.huataisangao.cn",
+    "z7.cnzz.com",
+    "z2.cnzz.com",
+    "s96.cnzz.com",
+    "q11.cnzz.com",
+    "thy.dacedsfa.cn",
+    "xg.whsbpw.cn",
+    "s19.cnzz.com",
+    "z8.cnzz.com",
+    "s4.cnzz.com",
+    "f5w.as12df.top",
+    "ae01.alicdn.com",
+    "www.92424.cn",
+    "k.wudejia.com",
+    "vivovip.mmszxc.top",
+    "qiu.xixiqiu.com",
+    "cdnjs.hnfenxun.com",
+    "cms.qdwght.com"
+  ]
+};
+
+/* 各配置段的展示名 */
+const SECTION_DEFS = [
+  { key: 'lives', label: 'lives 直播源', hint: '数组，每项 name/url 必填' },
+  { key: 'parses', label: 'parses 解析器', hint: '数组，每项 name/url 必填' },
+  { key: 'flags', label: 'flags 解析标记', hint: '字符串数组' },
+  { key: 'rules', label: 'rules 代理规则', hint: '数组，每项 name/hosts' },
+  { key: 'doh', label: 'doh DNS', hint: '数组，每项 name/url' },
+  { key: 'hosts', label: 'hosts 固定解析', hint: '字符串数组，域名=IP' },
+  { key: 'ijk', label: 'ijk 播放器参数', hint: '数组，每项 group/options' },
+  { key: 'ads', label: 'ads 广告屏蔽', hint: '字符串数组，一行一个域名' },
+];
+
+
+/* ------------------------------ 小工具 ------------------------------ */
+
+const $  = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+const esc = (s) => String(s == null ? '' : s)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+/** 显示宽度（中文按 2 算），用于对齐 PHP 数组 */
+function dw(s) {
+  let n = 0;
+  for (const ch of String(s)) n += /[\u1100-\u115F\u2E80-\uA4CF\uAC00-\uD7A3\uF900-\uFAFF\uFE10-\uFE19\uFE30-\uFE6F\uFF00-\uFF60\uFFE0-\uFFE6]/.test(ch) ? 2 : 1;
+  return n;
+}
+function padW(s, w) {
+  s = String(s);
+  let n = dw(s);
+  while (n < w) { s += ' '; n++; }
+  return s;
+}
+
+/** PHP / JS 单引号字符串 */
+function q1(s) {
+  return "'" + String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
+}
+function q2(s) {
+  return '"' + String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+}
+
+function normUrl(u) {
+  let s = String(u == null ? '' : u).trim().replace(/\s+/g, '');
+  if (!s) return '';
+  if (!/^https?:\/\//i.test(s)) s = 'https://' + s.replace(/^\/+/, '');
+  return s.replace(/\/+$/, '');
+}
+
+/** 从域名猜 key：www.xxx.com → xxx */
+function keyFromDomain(u) {
+  let s = normUrl(u).replace(/^https?:\/\//i, '');
+  s = s.split('/')[0].split(':')[0];
+  s = s.replace(/^www\./i, '');
+  const first = s.split('.')[0] || '';
+  return first.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+}
+
+function keyOk(k) { return /^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(String(k || '')); }
+/* 有本地脚本的站 key 要能当环境变量前缀，才限制字符集；api/jar 直连源的 key 只是标识，允许中文/符号 */
+function keyIsLoose(k) { return !!String(k || '').trim(); }
+
+function toast(msg, type, action) {
+  const box = $('#toasts');
+  const el = document.createElement('div');
+  el.className = 'toast' + (type === 'error' ? ' error' : type === 'ok' ? ' ok' : '') + (action ? ' has-action' : '');
+  const span = document.createElement('span');
+  span.textContent = msg;
+  el.appendChild(span);
+  if (action) {
+    const b = document.createElement('button');
+    b.className = 'toast-act';
+    b.type = 'button';
+    b.textContent = action.label;
+    b.addEventListener('click', () => { el.remove(); action.fn(); });
+    el.appendChild(b);
+  }
+  box.appendChild(el);
+  const life = action ? 6500 : 3000;
+  setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(6px)'; el.style.transition = '.25s'; }, life - 400);
+  setTimeout(() => el.remove(), life);
+}
+
+/* 两段式确认：第一次点按钮进入「确认」态，4 秒内再点才执行。
+   不用 window.confirm —— 内嵌浏览器 / 沙箱 iframe 里 confirm 会被静默拦截返回 false，
+   表现出来就是「点了没反应」。 */
+function armConfirm(el, okText, onOk) {
+  if (el.dataset.armed === '1') {
+    el.dataset.armed = '';
+    clearTimeout(el._armTimer);
+    if (el._restorePrev) el._restorePrev();
+    onOk();
+    return true;
+  }
+  el.dataset.armed = '1';
+  const prev = el.innerHTML;
+  el._restorePrev = () => { el.innerHTML = prev; el.classList.remove('armed'); };
+  el.innerHTML = okText;
+  el.classList.add('armed');
+  el._armTimer = setTimeout(() => {
+    if (el.dataset.armed === '1') {
+      el.dataset.armed = '';
+      if (el._restorePrev) el._restorePrev();
+    }
+  }, 4000);
+  return false;
+}
+
+/* 覆盖/删除类操作统一走「直接执行 + 撤销」：比确认框少一步，且能反悔 */
+let undoPrev = null;
+function snapshotSites() {
+  return {
+    sites: state.sites.map((s) => Object.assign({}, s)),
+    meta: clone(state.meta),
+    sections: clone(state.sections),
+    secBad: Object.assign({}, state.secBad),
+  };
+}
+function undoToast(msg) {
+  const snap = undoPrev;
+  toast(msg, 'ok', {
+    label: '撤销',
+    fn: () => {
+      if (!snap) return;
+      state.sites = snap.sites;
+      state.meta = snap.meta;
+      state.sections = snap.sections;
+      state.secBad = snap.secBad || {};
+      undoPrev = null;
+      afterChange(true);
+      toast('已撤销', 'ok');
+    },
+  });
+}
+function withUndo(msg, fn) {
+  undoPrev = snapshotSites();
+  fn();
+  afterChange(true);
+  undoToast(msg);
+}
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (e2) { ok = false; }
+    ta.remove();
+    return ok;
+  }
+}
+
+function download(name, text, mime) {
+  const blob = new Blob([text], { type: (mime || 'text/plain') + ';charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+function highlight(code, kind) {
+  let h = esc(code);
+  const re = /(\/\/[^\n]*|(?:^|[\s;])#[^\n]*)|('(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*")|(\$[a-zA-Z_]\w*)|\b(function|return|if|else|foreach|array|true|false|null|const|let|var|new)\b/g;
+  return h.replace(re, (m, cm, str, v, kw) => {
+    if (cm) return '<span class="tk-c">' + m + '</span>';
+    if (str) return '<span class="tk-s">' + m + '</span>';
+    if (v) return '<span class="tk-v">' + m + '</span>';
+    if (kw) return '<span class="tk-k">' + m + '</span>';
+    return m;
+  });
+}
+
+/* ------------------------------ 状态 ------------------------------ */
+
+const STORE_KEY = 'wanan_sites_mgr_v3';
+/* 旧缓存（v1/v2）不再自动读取：v2 里存的是内置 8 站，读回来等于没取消内置站点 */
+const clone = (o) => JSON.parse(JSON.stringify(o));
+
+const state = {
+  sites: DEFAULT_SITES.map(normalizeSite),
+  meta: clone(DEFAULT_META),
+  sections: clone(DEFAULT_SECTIONS),
+  secBad: {},            // 段 key -> 无效 JSON 时的原始文本（不写进文件）
+  tab: 'index',
+};
+
+let saveTimer = null;
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify({
+        sites: state.sites, meta: state.meta, sections: state.sections,
+      }));
+    } catch (e) { /* 存不下就算了 */ }
+  }, 250);
+}
+
+function loadSaved() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const d = JSON.parse(raw);
+      if (!d || !Array.isArray(d.sites)) return false;
+      state.sites = d.sites.map(normalizeSite);
+      if (d.meta && typeof d.meta === 'object') {
+        state.meta = Object.assign(clone(DEFAULT_META), d.meta);
+      }
+      if (d.sections && typeof d.sections === 'object') {
+        state.sections = Object.assign(clone(DEFAULT_SECTIONS), d.sections);
+      }
+      return true;
+    }
+    return false;
+  } catch (e) { return false; }
+}
+
+function normalizeSite(s) {
+  const num = (v, dv) => {
+    const n = Number(v);
+    return isFinite(n) ? n : dv;
+  };
+  return {
+    key: String(s.key == null ? '' : s.key).trim(),
+    name: String(s.name == null ? '' : s.name).trim(),
+    type: num(s.type, 3),
+    file: String(s.file == null ? '' : s.file).trim(),
+    api: String(s.api == null ? '' : s.api).trim(),      // 手填完整 api（csp_xxx 之类）
+    jar: String(s.jar == null ? '' : s.jar).trim(),
+    url: normUrl(s.url),
+    timeout: Number(s.timeout) >= 5 ? Number(s.timeout) : 20,
+    searchable: num(s.searchable, 1) ? 1 : 0,
+    quickSearch: num(s.quickSearch, 1) ? 1 : 0,
+    filterable: num(s.filterable, 0) ? 1 : 0,
+    changeable: num(s.changeable, 1) ? 1 : 0,
+    keyword: String(s.keyword == null ? '' : s.keyword).trim(),
+    env: String(s.env == null ? '' : s.env).trim(),
+    comment: String(s.comment == null ? '' : s.comment).trim(),
+    extStr: typeof s.extStr === 'string' ? s.extStr : '',
+    enabled: s.enabled !== false,
+    ownDir: !!s.ownDir,
+    dir: String(s.dir == null ? '' : s.dir).trim(),
+  };
+}
+
+/* ------------------------------ 解析器 ------------------------------ */
+
+/** 从 vod.php 文本解析站点（$defaults + $rows） */
+function parseVodPhp(text) {
+  const sites = [];
+  const defBlock = /\$defaults\s*=\s*\[([\s\S]*?)\];/.exec(text);
+  const rowBlock = /\$rows\s*=\s*\[([\s\S]*?)\];/.exec(text);
+  const defaults = {};
+  if (defBlock) {
+    const re = /'([^']+)'\s*=>\s*'([^']*)'/g;
+    let m;
+    while ((m = re.exec(defBlock[1])) !== null) defaults[m[1]] = m[2];
+  }
+  const rows = [];
+  if (rowBlock) {
+    let pending = [];
+    for (const line of rowBlock[1].split(/\r?\n/)) {
+      const t = line.trim();
+      if (!t) { pending = []; continue; }
+      if (t.startsWith('//')) { pending.push(t.replace(/^\/\/\s*/, '')); continue; }
+      const m = /^\[\s*'([^']+)'\s*,\s*'([^']*)'\s*,\s*'([^']*)'\s*,\s*(\d+)\s*\]\s*,?/.exec(t);
+      if (m) {
+        rows.push({ key: m[1], name: m[2], file: m[3], timeout: Number(m[4]), comment: pending.join(' ') });
+        pending = [];
+      } else { pending = []; }
+    }
+  }
+  for (const r of rows) {
+    sites.push(normalizeSite({
+      key: r.key, name: r.name, file: r.file, url: defaults[r.key] || '',
+      timeout: r.timeout, comment: r.comment, enabled: true, ownDir: false, dir: '',
+    }));
+  }
+  for (const k of Object.keys(defaults)) {
+    if (!sites.some((s) => s.key === k)) {
+      sites.push(normalizeSite({ key: k, name: k, file: k + '.js', url: defaults[k], timeout: 20 }));
+    }
+  }
+  return sites;
+}
+
+/** 从 site.txt 文本解析 key=url（注释行作为备注） */
+function parseSiteTxt(text) {
+  const out = [];
+  let comment = '';
+  for (const line of text.split(/\r?\n/)) {
+    const row = line.replace(/^\uFEFF/, '').trim();
+    if (!row) { comment = ''; continue; }
+    if (row.startsWith('#')) {
+      const c = row.replace(/^#\s*/, '');
+      if (!/站点域名|地址可写|特狗|樱花/.test(c)) comment = c;
+      continue;
+    }
+    const m = /^([A-Za-z0-9_-]+)\s*=\s*(.+)$/.exec(row);
+    if (!m) continue;
+    out.push({ key: m[1].toLowerCase(), url: normUrl(m[2]), comment: comment });
+    comment = '';
+  }
+  return out;
+}
+
+/** 从 server.js 文本解析 SITES 条目 */
+function parseServerSites(text) {
+  const out = {};
+  const re = /\{\s*\n([\s\S]*?)\n\s*\},/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    const body = m[1];
+    const key = (/key:\s*"([^"]+)"/.exec(body) || [])[1];
+    if (!key) continue;
+    const name = (/name:\s*"([^"]+)"/.exec(body) || [])[1] || key;
+    const file = (/file:\s*"([^"]+)"/.exec(body) || [])[1] || key + '.js';
+    const keyword = (/keyword:\s*"([^"]+)"/.exec(body) || [])[1] || '';
+    const timeout = Number((/timeout:\s*(\d+)/.exec(body) || [])[1]) || 20;
+    const api = (/api:\s*\([^"]*"([^"]+)"/.exec(body) || [])[1] || '';
+    const env = (/process\.env\.([A-Za-z0-9_]+)/.exec(body) || [])[1] || '';
+    const origin = (/origin:\s*path\.join\(([^)]*)\)/.exec(body) || [])[1] || '';
+    // origin 里带 ".." 才是各站自己的源目录；只有 __dirname, "js", file 说明只在合集里维护
+    let ownDir = true, dir = '';
+    if (/"\.\."/.test(origin)) {
+      ownDir = false;
+      const dm = /"\.\.",\s*"([^"]+)"/.exec(origin);
+      if (dm) dir = dm[1];
+    }
+    let comment = '';
+    const cm = /^\s*\/\/\s*(.+)$/m.exec(body);
+    if (cm && !/只在合集|没有独立|无独立/.test(cm[1])) comment = cm[1].trim();
+    out[key] = { key, name, file, keyword, env, timeout, url: normUrl(api), ownDir, dir, comment };
+  }
+  return out;
+}
+
+/** 宽容 JSON 解析：去 BOM、去注释、去尾逗号、去 JS 包装 */
+function parseLooseJson(text) {
+  let t = String(text || '').replace(/^\uFEFF/, '').trim();
+  t = t.replace(/^[a-zA-Z_$][\w$]*\s*=\s*/, '');          // var config = ...
+  t = t.replace(/;\s*$/, '');
+  t = t.replace(/\/\*[\s\S]*?\*\//g, '');                  // 块注释
+  t = t.replace(/(^|[^:\\])\/\/[^\n\r]*/g, '$1');          // 行注释（避开 http://）
+  t = t.replace(/,\s*([}\]])/g, '$1');                    // 尾逗号
+  t = t.replace(/([{,]\s*)'([^'\\]*)'\s*:/g, '$1"$2":');   // 单引号键
+  return JSON.parse(t);
+}
+
+/** 从 App 配置（index.html 里的 JSON）解析站点与各配置段 */
+function parseConfig(obj) {
+  const out = { meta: {}, sections: {}, sites: [] };
+  if (!obj || typeof obj !== 'object') return out;
+  const metaKeys = ['name', 'notice', 'spider', 'logo', 'wallpaper', 'warningText'];
+  for (const k of metaKeys) {
+    if (obj[k] !== undefined && obj[k] !== null) out.meta[k] = String(obj[k]);
+  }
+  for (const k of Object.keys(DEFAULT_SECTIONS)) {
+    if (Array.isArray(obj[k])) out.sections[k] = obj[k];
+  }
+  if (!Array.isArray(obj.sites)) return out;
+  for (const s of obj.sites) {
+    if (!s || !s.key) continue;
+    const apiStr = String(s.api || '');
+    const isScript = /\.js(\?|$)/i.test(apiStr);
+    const file = isScript ? apiStr.replace(/^.*\//, '').replace(/\?.*$/, '') : '';
+    const extApi = (s.ext && typeof s.ext === 'object' && s.ext.api) || '';
+    const site = normalizeSite({
+      key: s.key,
+      name: s.name || s.key,
+      type: s.type !== undefined ? s.type : 3,
+      file: file,
+      api: isScript ? '' : apiStr,
+      jar: s.jar || '',
+      url: extApi,
+      timeout: Number(s.timeout) || 20,
+      searchable: s.searchable !== undefined ? s.searchable : 1,
+      quickSearch: s.quickSearch !== undefined ? s.quickSearch : 1,
+      filterable: s.filterable !== undefined ? s.filterable : 0,
+      changeable: s.changeable !== undefined ? s.changeable : 1,
+      keyword: s.keyword || '',
+      enabled: true,
+    });
+    if (s.ext !== undefined && (typeof s.ext === 'string' || s.ext === null)) site.extStr = s.ext;
+    out.sites.push(site);
+  }
+  return out;
+}
+
+/** 批量添加文本 → 站点数组 */
+function parseBatch(text) {
+  const out = [];
+  const lines = String(text || '').split(/\r?\n/);
+  lines.forEach((line) => {
+    const raw = line.trim();
+    if (!raw || raw.startsWith('#')) return;
+    let parts = raw.split(/\s*[|,，\t]\s*/).filter((x) => x !== '');
+    if (parts.length === 0) return;
+
+    let key = '', name = '', url = '', file = '', keyword = '';
+    if (parts.length === 1) {
+      url = parts[0];
+    } else if (parts.length === 2) {
+      name = parts[0]; url = parts[1];
+    } else {
+      key = parts[0]; name = parts[1]; url = parts[2];
+      file = parts[3] || ''; keyword = parts[4] || '';
+    }
+    if (!/^https?:\/\//i.test(url) && !/\./.test(url)) {
+      // 不是域名也不是链接，可能写反了：把第一个像域名的当 url
+      const idx = parts.findIndex((p) => /\./.test(p) || /^https?:\/\//i.test(p));
+      if (idx >= 0) url = parts[idx];
+    }
+    url = normUrl(url);
+    if (!url) return;
+    if (!key) key = keyFromDomain(url);
+    if (!key) key = 'site' + (out.length + 1);
+    if (!name) name = key;
+    if (!file) file = key + '.js';
+    out.push(normalizeSite({ key, name, file, url, keyword, enabled: true, timeout: 20 }));
+  });
+  return out;
+}
+
+/* ------------------------------ 生成器 ------------------------------ */
+
+/* 站点对象 → App 配置里的 site 项（顺序与参考配置一致，空值不写） */
+function siteToConfig(s) {
+  const o = { key: s.key, name: s.name };
+  if (s.type && s.type !== 3) o.type = s.type; else o.type = 3;
+  o.api = s.api || ('./js/' + s.file);
+  if (s.searchable !== 1) o.searchable = s.searchable;
+  if (s.quickSearch !== 1) o.quickSearch = s.quickSearch;
+  if (s.filterable !== 0) o.filterable = s.filterable;
+  if (s.changeable !== 1) o.changeable = s.changeable;
+  if (s.jar) o.jar = s.jar;
+  if (s.extStr) o.ext = s.extStr;
+  else if (s.url) o.ext = { api: s.url };
+  if (s.timeout && s.timeout !== 20) o.timeout = s.timeout;
+  return o;
+}
+
+/** 生成完整 App 配置对象（就是 index.html 的内容） */
+function buildConfig() {
+  const cfg = {};
+  const m = state.meta || {};
+  cfg.name = (m.name || '晚安影视').trim();
+  if (m.notice && m.notice.trim()) cfg.notice = m.notice.trim();
+  if (m.spider && m.spider.trim()) cfg.spider = m.spider.trim();
+  if (m.logo && m.logo.trim()) cfg.logo = m.logo.trim();
+  if (m.wallpaper && m.wallpaper.trim()) cfg.wallpaper = m.wallpaper.trim();
+  if (m.warningText && m.warningText.trim()) cfg.warningText = m.warningText.trim();
+  cfg.sites = state.sites.filter((s) => s.enabled).map(siteToConfig);
+  for (const def of SECTION_DEFS) {
+    if (state.secBad[def.key] !== undefined) continue;   // JSON 有错就不写进文件
+    const v = state.sections[def.key];
+    if (Array.isArray(v) && v.length) cfg[def.key] = v;
+  }
+  return cfg;
+}
+
+/** index.html：文件内容就是配置 JSON 纯文本 */
+function genIndexHtml() {
+  return JSON.stringify(buildConfig(), null, 2) + '\n';
+}
+
+function genServerSites() {
+  const out = [];
+  for (const s of state.sites) {
+    if (!s.enabled || !s.file) continue;
+    const env = (s.env && s.env.trim()
+      ? s.env
+      : s.key.toUpperCase().replace(/[^A-Z0-9]/g, '_') + '_SITE'
+    ).toUpperCase().replace(/[^A-Z0-9_]/g, '');
+    const lines = ['  {'];
+    if (s.comment) for (const c of s.comment.split(/\r?\n/)) lines.push('    // ' + c.trim());
+    lines.push('    key: ' + q2(s.key) + ',');
+    lines.push('    name: ' + q2(s.name) + ',');
+    lines.push('    file: ' + q2(s.file) + ',');
+    lines.push('    src: path.join(__dirname, "js", ' + q2(s.file) + '),');
+    if (s.ownDir) {
+      lines.push('    origin: path.join(__dirname, "js", ' + q2(s.file) + '), // 只在合集里维护，无独立源目录');
+    } else {
+      const dir = s.dir || s.key;
+      lines.push('    origin: path.join(__dirname, "..", ' + q2(dir) + ', "js", ' + q2(s.file) + '),');
+    }
+    lines.push('    api: (process.env.' + env + ' || ' + q2(s.url) + ').replace(/\\/+$/, ""),');
+    if (s.timeout !== 20) lines.push('    timeout: ' + s.timeout + ',');
+    if (s.keyword) lines.push('    keyword: ' + q2(s.keyword) + ',');
+    lines.push('  },');
+    out.push(lines.join('\n'));
+  }
+  return out.join('\n') + (out.length ? '\n' : '');
+}
+
+const TAB_DEFS = {
+  index: { name: 'index.html', file: 'index.html', gen: genIndexHtml, lang: 'json',
+    note: '下载后覆盖 合集/index.html：文件内容就是 App 要读的配置 JSON（不是网页）。' },
+  serverjs: { name: 'server.js · SITES', file: 'server.sites.txt', gen: genServerSites, lang: 'js',
+    note: '粘进 合集/server.js 的 SITES 数组（最后一个站之后）。没有脚本文件的站（api 直连 jar 源）不会出现在这里。' },
+};
+
+/* ------------------------------ 校验 ------------------------------ */
+
+function validate() {
+  const errs = [];
+  const seenKey = {}, seenApi = {};
+  state.sites.forEach((s, i) => {
+    const tag = '第 ' + (i + 1) + ' 个「' + (s.name || s.key || '未命名') + '」：';
+    if (!s.key) errs.push({ i, field: 'key', msg: tag + 'key 不能为空' });
+    else if (s.file && !keyOk(s.key)) errs.push({ i, field: 'key', msg: tag + 'key 只能包含字母、数字、下划线、短横线（api 直连源可忽略）' });
+    else {
+      const k = s.key.toLowerCase();
+      if (seenKey[k] !== undefined) errs.push({ i, field: 'key', msg: tag + 'key 与第 ' + (seenKey[k] + 1) + ' 个重复' });
+      else seenKey[k] = i;
+    }
+    if (!s.name) errs.push({ i, field: 'name', msg: tag + '显示名称不能为空' });
+    if (s.file && Number(s.type) !== 3) errs.push({ i, field: 'type', msg: tag + '本地脚本(./js/*.js)的 type 必须是 3' });
+    else if (!s.file && !(Number(s.type) >= 0 && Number(s.type) <= 3)) errs.push({ i, field: 'type', msg: tag + 'type 要写 0～3' });
+    if (!s.file && !s.api) {
+      errs.push({ i, field: 'file', msg: tag + '脚本文件和 api 至少填一个' });
+    } else if (s.file && !/\.js$/i.test(s.file)) {
+      errs.push({ i, field: 'file', msg: tag + '脚本文件名必须以 .js 结尾' });
+    } else if (s.file) {
+      const f = s.file.toLowerCase();
+      if (seenApi[f] !== undefined) errs.push({ i, field: 'file', msg: tag + '脚本文件名与第 ' + (seenApi[f] + 1) + ' 个重复' });
+      else seenApi[f] = i;
+    }
+    if (s.url && !/^https?:\/\/[^\s/]+/i.test(s.url)) errs.push({ i, field: 'url', msg: tag + '域名要以 http:// 或 https:// 开头（可以不填）' });
+    if (!(s.timeout >= 5 && s.timeout <= 120)) errs.push({ i, field: 'timeout', msg: tag + '超时要写 5～120 秒' });
+    if (s.env && !/^[A-Za-z][A-Za-z0-9_]*$/.test(s.env)) errs.push({ i, field: 'env', msg: tag + '环境变量只能含字母、数字、下划线，且以字母开头' });
+  });
+  for (const def of SECTION_DEFS) {
+    if (state.secBad[def.key] !== undefined) {
+      errs.push({ sec: def.key, msg: def.label + ' 的 JSON 格式不对，已跳过不写进文件' });
+    }
+  }
+  return errs;
+}
+
+/* ------------------------------ 渲染：列表 ------------------------------ */
+
+const listEl = $('#list');
+const validEl = $('#valid');
+const codeEl = $('#code');
+const noteEl = $('#tab-note');
+
+function siteCard(s, i) {
+  return '' +
+    '<div class="card" data-i="' + i + '">' +
+      '<div class="card-head">' +
+        '<span class="dot ' + (s.enabled ? 'on' : 'off') + '" title="' + (s.enabled ? '已启用' : '已停用') + '"></span>' +
+        '<span class="idx">#' + (i + 1) + '</span>' +
+        '<span class="badge">' + esc(s.key || '(无 key)') + '</span>' +
+        '<span class="cname">' + esc(s.name || '(未命名)') + '</span>' +
+        '<span class="curl">' + esc(s.url) + '</span>' +
+        '<span class="ops">' +
+          '<button data-act="up" data-i="' + i + '" title="上移">↑</button>' +
+          '<button data-act="down" data-i="' + i + '" title="下移">↓</button>' +
+          '<button data-act="copy" data-i="' + i + '" title="把这个站点复制成 JSON 放进剪贴板">⧉</button>' +
+          '<button data-act="paste" data-i="' + i + '" class="paste" title="粘贴站点数据（JSON）">📋</button>' +
+          '<button data-act="del" data-i="' + i + '" class="danger" title="删除">✕</button>' +
+        '</span>' +
+      '</div>' +
+      '<div class="card-paste" data-i="' + i + '" hidden>' +
+        '<textarea class="sheet" data-ci="' + i + '" placeholder="Ctrl+V 粘贴站点 JSON：单个 {...}、数组 [{...}]、整份配置或一行一个"></textarea>' +
+        '<div class="row">' +
+          '<button class="btn primary" data-act="paste-apply" data-i="' + i + '">填入此卡</button>' +
+          '<button class="btn" data-act="paste-clip" data-i="' + i + '">从剪贴板</button>' +
+          '<button class="btn" data-act="paste-cancel" data-i="' + i + '">收起</button>' +
+          '<span class="cp-info" data-ci="' + i + '">还没有内容</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="fields">' +
+        field(i, 'key', 'key', s.key, 'guobayu') +
+        field(i, 'name', '名称', s.name, '锅巴鱼影院') +
+        field(i, 'file', '脚本文件（生成 api: ./js/…）', s.file, 'guobayu.js') +
+        field(i, 'api', 'api（手填，留空用脚本文件）', s.api, 'csp_NewDouBanGuard') +
+        field(i, 'jar', 'jar（选填）', s.jar, 'http://…/spider.jar;md5;…') +
+        '<label>type<input type="number" min="0" max="9" data-i="' + i + '" data-f="type" value="' + esc(s.type) + '"></label>' +
+        '<label>超时（秒）<input type="number" min="5" max="120" data-i="' + i + '" data-f="timeout" value="' + esc(s.timeout) + '"></label>' +
+        field(i, 'url', '域名（写进 ext.api，可不填）', s.url, 'https://www.guobayu.com', true) +
+        field(i, 'comment', '备注（生成注释）', s.comment, '选填，多行用换行', true) +
+        field(i, 'keyword', '搜索关键词（server.js 用）', s.keyword, '庆余年') +
+        field(i, 'env', '环境变量（留空自动）', s.env, 'GUOBA_SITE') +
+        field(i, 'dir', '源目录名（不勾独占时用）', s.dir, 'guobayu') +
+        '<div class="chk-row">' +
+          '<label class="chk"><input type="checkbox" data-i="' + i + '" data-f="enabled" ' + (s.enabled ? 'checked' : '') + '> 启用</label>' +
+          '<label class="chk"><input type="checkbox" data-i="' + i + '" data-f="searchable" ' + (s.searchable ? 'checked' : '') + '> 可搜索</label>' +
+          '<label class="chk"><input type="checkbox" data-i="' + i + '" data-f="quickSearch" ' + (s.quickSearch ? 'checked' : '') + '> 快速搜索</label>' +
+          '<label class="chk"><input type="checkbox" data-i="' + i + '" data-f="filterable" ' + (s.filterable ? 'checked' : '') + '> 可筛选</label>' +
+          '<label class="chk"><input type="checkbox" data-i="' + i + '" data-f="changeable" ' + (s.changeable ? 'checked' : '') + '> 可切换</label>' +
+          '<label class="chk"><input type="checkbox" data-i="' + i + '" data-f="ownDir" ' + (s.ownDir ? 'checked' : '') + '> 独占源目录</label>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+}
+
+function field(i, f, label, val, ph, wide) {
+  return '<label' + (wide ? ' class="wide"' : '') + '>' + label + '<input type="text" data-i="' + i + '" data-f="' + f + '" value="' + esc(val) + '" placeholder="' + esc(ph) + '"></label>';
+}
+
+function renderList() {
+  if (!state.sites.length) {
+    listEl.innerHTML = '<div class="empty">列表是空的<br>点右上角「＋ 添加站点」/「批量添加」/「粘贴站点」录入，<br>或在下面「导入现有文件」里读入旧的 vod.php、index.html、站点工程</div>';
+  } else {
+    listEl.innerHTML = state.sites.map(siteCard).join('');
+  }
+  $('#site-count').textContent = state.sites.length;
+  renderValidBadges();
+}
+
+function renderValidBadges() {
+  const errs = validate();
+  const bad = new Set();
+  for (const e of errs) bad.add(e.i + ':' + e.field);
+  $$('#list input[data-f]').forEach((inp) => {
+    const key = inp.dataset.i + ':' + inp.dataset.f;
+    inp.classList.toggle('bad', bad.has(key));
+  });
+}
+
+function renderValidation() {
+  const errs = validate();
+  if (!errs.length) {
+    validEl.innerHTML = '<div class="vitem ok">✓ ' + (state.sites.length ? state.sites.length + ' 个站点' : '列表为空') + '，' +
+      SECTION_DEFS.filter((d) => (state.sections[d.key] || []).length).length + ' 个配置段，格式都对</div>';
+    return;
+  }
+  validEl.innerHTML = errs.map((e) => e.sec
+    ? '<div class="vitem err" data-sec="' + e.sec + '">⚠ ' + esc(e.msg) + '</div>'
+    : '<div class="vitem err" data-jump="' + e.i + '">⚠ ' + esc(e.msg) + '</div>'
+  ).join('');
+  $$('#valid .vitem').forEach((el) => {
+    el.addEventListener('click', () => {
+      if (el.dataset.sec) {
+        const jed = document.querySelector('.jed[data-sec="' + el.dataset.sec + '"]');
+        if (!jed) return;
+        jed.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const ta = jed.querySelector('textarea');
+        if (ta) ta.focus();
+        return;
+      }
+      const card = listEl.querySelector('.card[data-i="' + el.dataset.jump + '"]');
+      if (!card) return;
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      card.classList.add('flash');
+      setTimeout(() => card.classList.remove('flash'), 1200);
+    });
+  });
+}
+
+function updateCardMeta(i) {
+  const s = state.sites[i];
+  const card = listEl.querySelector('.card[data-i="' + i + '"]');
+  if (!card) return;
+  const dot = card.querySelector('.dot');
+  dot.className = 'dot ' + (s.enabled ? 'on' : 'off');
+  dot.title = s.enabled ? '已启用' : '已停用';
+  card.querySelector('.badge').textContent = s.key || '(无 key)';
+  card.querySelector('.cname').textContent = s.name || '(未命名)';
+  card.querySelector('.curl').textContent = s.url || '';
+}
+
+/* ------------------------------ 渲染：配置项 ------------------------------ */
+
+const META_DEFS = [
+  { key: 'name', label: 'name 名称', req: true, ph: '晚安影视' },
+  { key: 'notice', label: 'notice 提示文字', ph: '晚安影视，免费分享' },
+  { key: 'spider', label: 'spider 爬虫 jar', ph: 'http://…/spider.jar;md5;…' },
+  { key: 'logo', label: 'logo 图标', ph: 'https://…/logo.png' },
+  { key: 'wallpaper', label: 'wallpaper 壁纸', ph: 'https://…/bg.jpg' },
+  { key: 'warningText', label: 'warningText 首页警告', ph: '留空就不显示', full: true },
+];
+
+function renderMeta() {
+  $('#cfg-meta').innerHTML = META_DEFS.map((d) => {
+    const val = state.meta[d.key] || '';
+    let extra = '';
+    if (d.key === 'logo' || d.key === 'wallpaper') {
+      extra = '<div class="imgprev">' +
+        '<img data-prev="' + d.key + '" alt=""' + (val ? ' src="' + esc(val) + '"' : ' hidden') + '>' +
+        '<span class="imgmiss" data-miss="' + d.key + '">' + (val ? '' : '留空就用默认') + '</span></div>';
+    }
+    return '<label' + (d.full ? ' class="full"' : d.wide ? ' class="wide"' : '') + '>' +
+      '<span class="cap">' + d.label + (d.req ? '<i class="req">*</i>' : '<i class="opt">可选</i>') + '</span>' +
+      '<input type="text" data-meta="' + d.key + '" value="' + esc(val) +
+      '" placeholder="' + esc(d.ph) + '">' + extra + '</label>';
+  }).join('');
+  $$('#cfg-meta img[data-prev]').forEach((img) => {
+    img.addEventListener('error', () => {
+      img.hidden = true;
+      const miss = img.parentNode.querySelector('[data-miss]');
+      if (miss) { miss.textContent = '图片加载不到（要公网直链）'; miss.style.color = '#ff9b9b'; }
+    });
+  });
+}
+
+function updateImgPreview(key) {
+  const img = document.querySelector('#cfg-meta img[data-prev="' + key + '"]');
+  const miss = document.querySelector('#cfg-meta [data-miss="' + key + '"]');
+  if (!img) return;
+  const v = (state.meta[key] || '').trim();
+  if (!v) {
+    img.hidden = true;
+    img.removeAttribute('src');
+    if (miss) { miss.textContent = '留空就用默认'; miss.style.color = ''; }
+    return;
+  }
+  img.hidden = false;
+  img.src = v;
+  if (miss) { miss.textContent = ''; miss.style.color = ''; }
+}
+
+function sectionText(key) {
+  const v = state.sections[key];
+  if (state.secBad[key] !== undefined) return state.secBad[key];
+  return Array.isArray(v) ? JSON.stringify(v, null, 2) : '';
+}
+
+function renderEditors() {
+  $('#cfg-editors').innerHTML = SECTION_DEFS.map((d) => {
+    const bad = state.secBad[d.key] !== undefined;
+    const tv = sectionText(d.key);
+    const on = Array.isArray(state.sections[d.key]) && state.sections[d.key].length;
+    return '<div class="jed" data-sec="' + d.key + '">' +
+      '<div class="jed-head"><b>' + d.key + '</b><span class="tag">' + esc(d.hint) + '</span>' +
+        '<span class="st ' + (bad ? 'bad' : (on ? 'ok' : '')) + '">' + (bad ? '✗ JSON 无效' : (on ? '✓ ' + state.sections[d.key].length + ' 项' : '空，不写')) + '</span>' +
+        '<span class="spacer" style="flex:1"></span>' +
+        '<button class="btn small" data-fmt="' + d.key + '">格式化</button>' +
+        '<button class="btn small" data-clr="' + d.key + '">清空</button>' +
+      '</div>' +
+      '<textarea data-secbox="' + d.key + '" spellcheck="false"' + (bad ? ' class="bad"' : '') + '>' + esc(tv) + '</textarea>' +
+    '</div>';
+  }).join('');
+}
+
+function refreshSecStatus(key) {
+  const box = document.querySelector('.jed[data-sec="' + key + '"]');
+  if (!box) return;
+  const bad = state.secBad[key] !== undefined;
+  const arr = state.sections[key];
+  const on = Array.isArray(arr) && arr.length;
+  const st = box.querySelector('.st');
+  st.className = 'st ' + (bad ? 'bad' : (on ? 'ok' : ''));
+  st.textContent = bad ? '✗ JSON 无效' : (on ? '✓ ' + arr.length + ' 项' : '空，不写');
+  box.querySelector('textarea').classList.toggle('bad', bad);
+}
+
+
+
+let codeTimer = null;
+function renderCode() {
+  clearTimeout(codeTimer);
+  codeTimer = setTimeout(() => {
+    const def = TAB_DEFS[state.tab] || TAB_DEFS.index;
+    const code = def.gen();
+    codeEl.innerHTML = highlight(code, def.lang);
+    noteEl.innerHTML = def.note || '';
+  }, 60);
+}
+
+/** 把任意粘贴内容拆成站点对象列表：支持单个/数组/整份配置/一行一个 JSON */
+function pickSiteList(v) {
+  if (Array.isArray(v)) return v;
+  if (!v || typeof v !== 'object') return null;
+  if (Array.isArray(v.sites)) return v.sites;
+  if (v.key || v.name || v.api || v.jar) return [v];
+  const ks = Object.keys(v);
+  const vals = ks.map((k) => v[k]);
+  if (vals.length && vals.every((x) => x && typeof x === 'object' && (x.key || x.name || x.api))) {
+    return vals.map((x, i) => Object.assign({ key: ks[i] }, x));
+  }
+  return null;
+}
+
+/** 解析粘贴的站点，返回 { sites, bad[] } */
+function parsePastedSites(text) {
+  const raw = String(text || '').replace(/^\uFEFF/, '').trim();
+  if (!raw) return { sites: [], bad: [] };
+  const bad = [];
+  let list = null;
+  try { list = pickSiteList(parseLooseJson(raw)); } catch (e) { list = null; }
+  if (!list) {
+    list = [];
+    raw.split(/\r?\n/).forEach((line, i) => {
+      const t = line.trim().replace(/,\s*$/, '').replace(/^[ \t]*[-*]\s+/, '');
+      if (!t || t === '[' || t === ']' || t === '{' || t === '}' || t === '[]') return;
+      try {
+        const one = pickSiteList(parseLooseJson(t));
+        if (one) list = list.concat(one);
+        else bad.push('第 ' + (i + 1) + ' 行不是站点');
+      } catch (e) { bad.push('第 ' + (i + 1) + ' 行 JSON 解析失败'); }
+    });
+  }
+  const sites = [];
+  list.forEach((s, i) => {
+    if (!s || typeof s !== 'object') { bad.push('第 ' + (i + 1) + ' 个不是对象'); return; }
+    const o = Object.assign({}, s);
+    if (!o.key) {
+      const host = String((o.ext && typeof o.ext === 'object' && o.ext.api) || o.api || '').replace(/^https?:\/\/([^/]+).*$/, '$1');
+      const m = /^www\.([a-z0-9-]+)\./i.exec(host) || /^([a-z0-9-]+)\./.exec(host);
+      o.key = (m ? m[1] : '').toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'site' + (sites.length + 1);
+    }
+    try {
+      const one = parseConfig({ sites: [o] }).sites[0];
+      if (one) sites.push(one); else bad.push('第 ' + (i + 1) + ' 个缺少 key/name');
+    } catch (e) { bad.push('第 ' + (i + 1) + ' 个解析失败'); }
+  });
+  return { sites, bad };
+}
+
+function renderPasteSites() {
+  const area = $('#pastesite-area');
+  const info = $('#pastesite-info');
+  if (!area || !info) return;
+  const txt = area.value;
+  const r = parsePastedSites(txt);
+  if (!String(txt || '').trim()) {
+    info.className = 'valid';
+    info.innerHTML = '<span class="hint">粘贴后这里显示识别结果</span>';
+    return;
+  }
+  const head = '识别到 <b>' + r.sites.length + '</b> 个站点' +
+    (r.bad.length ? '，<b style="color:var(--red)">' + r.bad.length + '</b> 处有问题' : '');
+  const items = r.sites.slice(0, 40).map((s) =>
+    '<code>' + esc(s.key) + '</code> ' + esc(s.name || '') +
+    (s.file ? ' <span class="hint">' + esc(s.file) + '</span>' : (s.api ? ' <span class="hint">api</span>' : ''))
+  ).join('　');
+  const errs = r.bad.slice(0, 6).map((e) => '<div class="vitem err">' + esc(e) + '</div>').join('');
+  info.className = 'valid' + (r.bad.length ? '' : ' ok');
+  info.innerHTML = '<div class="vitem ' + (r.bad.length ? '' : 'ok') + '">' + head + '</div>' +
+    (items ? '<div class="vitem">' + items + (r.sites.length > 40 ? ' …' : '') + '</div>' : '') + errs;
+}
+
+/** ---------- 卡片内「粘贴站点数据」 ---------- */
+function cardPasteBox(i) {
+  const card = listEl.querySelector('.card[data-i="' + i + '"]');
+  return card ? card.querySelector('.card-paste') : null;
+}
+
+/** 展开 / 收起某张卡片的粘贴框 */
+function toggleCardPaste(i, open) {
+  const box = cardPasteBox(i);
+  if (!box) return;
+  box.hidden = open === undefined ? !box.hidden : !open;
+  if (!box.hidden) {
+    const ta = box.querySelector('textarea');
+    if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+  }
+}
+
+/** 实时预览粘贴框里的识别结果 */
+function previewCardPaste(i) {
+  const box = cardPasteBox(i);
+  if (!box) return { sites: [], bad: [] };
+  const ta = box.querySelector('textarea');
+  const info = box.querySelector('.cp-info');
+  const r = parsePastedSites(ta.value);
+  if (info) {
+    info.className = 'cp-info' + (r.sites.length ? (r.bad.length ? '' : ' ok') : (r.bad.length ? ' bad' : ''));
+    info.textContent = !String(ta.value || '').trim()
+      ? '还没有内容'
+      : ('识别 ' + r.sites.length + ' 个站点' +
+         (r.bad.length ? '，' + r.bad.length + ' 处有问题：' + r.bad[0] : ''));
+  }
+  return r;
+}
+
+/** 把粘贴内容填进这张卡（只取第一个站点） */
+function applyCardPaste(i, text) {
+  const box = cardPasteBox(i);
+  const ta = box ? box.querySelector('textarea') : null;
+  const r = parsePastedSites(text !== undefined ? text : (ta ? ta.value : ''));
+  if (!r.sites.length) { toast('没识别到站点，检查下粘贴内容', 'error'); return; }
+  const old = state.sites[i];
+  const ns = normalizeSite(Object.assign({}, r.sites[0], { enabled: old ? old.enabled : true }));
+  undoPrev = snapshotSites();
+  state.sites[i] = ns;
+  afterChange(true);
+  toggleCardPaste(i, false);
+  undoToast('已粘贴填入「' + (ns.key || ns.name || '这条') + '」');
+  if (r.sites.length > 1) toast('识别到 ' + r.sites.length + ' 个站点，这里只填了第一个；一次加多个请用顶部「粘贴站点」', 'ok');
+}
+
+/** 从剪贴板读进这张卡的粘贴框 */
+function readClipInto(i) {
+  const box = cardPasteBox(i);
+  const ta = box ? box.querySelector('textarea') : null;
+  if (!ta) return;
+  if (!navigator.clipboard || !navigator.clipboard.readText) {
+    toast('这个环境不支持读剪贴板，点文本框按 Ctrl+V 粘贴', 'error');
+    return;
+  }
+  navigator.clipboard.readText().then((t) => {
+    if (!String(t || '').trim()) { toast('剪贴板是空的', 'error'); return; }
+    ta.value = t;
+    previewCardPaste(i);
+    toast('已从剪贴板读入，确认无误点「填入此卡」', 'ok');
+  }).catch((e) => {
+    toast('读不到剪贴板（' + ((e && e.message) || '无权限') + '），点文本框按 Ctrl+V 粘贴', 'error');
+  });
+}
+
+/** 点 📋：展开粘贴框；剪贴板里正好有一个站点就直接填 */
+function openCardPaste(i) {
+  const box = cardPasteBox(i);
+  if (!box) return;
+  const ta = box.querySelector('textarea');
+  const wasHidden = box.hidden;
+  toggleCardPaste(i, true);
+  if (ta && String(ta.value || '').trim()) { previewCardPaste(i); return; }
+  if (!wasHidden) return;
+  if (!navigator.clipboard || !navigator.clipboard.readText) return;
+  navigator.clipboard.readText().then((t) => {
+    if (!String(t || '').trim()) { toast('剪贴板是空的，直接 Ctrl+V 粘到这个框里', 'error'); return; }
+    const r = parsePastedSites(t);
+    if (r.sites.length === 1) { applyCardPaste(i, t); return; }
+    if (ta) { ta.value = t; previewCardPaste(i); }
+    toast(r.sites.length > 1
+      ? ('剪贴板里有 ' + r.sites.length + ' 个站点，已放进框里，点「填入此卡」用第一个')
+      : '剪贴板内容不像站点 JSON，已放进框里，可以手动改', r.sites.length > 1 ? 'ok' : 'error');
+  }).catch(() => { /* 没权限就等用户手动 Ctrl+V */ });
+}
+
+/** 把粘贴框里的站点加进列表；replace=true 时先清空 */
+function applyPastedSites(replace) {
+  const r = parsePastedSites($('#pastesite-area').value);
+  if (!r.sites.length) { toast('没识别到站点，检查下粘贴内容', 'error'); return; }
+  const add = () => {
+    if (replace) state.sites = r.sites.slice();
+    else state.sites = state.sites.concat(r.sites);
+    afterChange(true);
+    toast('已' + (replace ? '替换为' : '粘贴添加 ') + r.sites.length + ' 个站点', 'ok');
+  };
+  if (replace && state.sites.length) armConfirm($('#btn-pastesite-replace'), '确认替换整个列表', add);
+  else add();
+}
+
+/* ------------------------------ 事件 ------------------------------ */
+
+function bindEvents() {
+  // 顶栏
+  $('#btn-add').addEventListener('click', () => {
+    const n = state.sites.length + 1;
+    state.sites.push(normalizeSite({ key: 'site' + n, name: '新站点' + n, file: 'site' + n + '.js', url: '', timeout: 20, enabled: true }));
+    afterChange(true);
+    const last = listEl.querySelector('.card[data-i="' + (state.sites.length - 1) + '"]');
+    if (last) { last.scrollIntoView({ behavior: 'smooth', block: 'center' }); const inp = last.querySelector('input[data-f="key"]'); if (inp) inp.focus(); }
+  });
+
+  $('#btn-batch').addEventListener('click', () => {
+    const sec = $('#batch-area').closest('details');
+    sec.open = true;
+    sec.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    $('#batch-area').focus();
+  });
+
+  $('#btn-default').addEventListener('click', (e) => {
+    if (!state.sites.length) { toast('列表已经是空的', 'info'); return; }
+    armConfirm(e.currentTarget, '确认清空站点列表', () => {
+      withUndo('已清空站点列表（' + state.sites.length + ' 个）', () => {
+        state.sites = [];
+      });
+    });
+  });
+
+  $('#btn-export').addEventListener('click', () => {
+    download('站点工程.json', JSON.stringify({
+      version: 2, savedAt: new Date().toISOString(),
+      sites: state.sites, meta: state.meta, sections: state.sections,
+    }, null, 2), 'application/json');
+    toast('已导出工程文件', 'ok');
+  });
+
+  $('#file-project').addEventListener('change', (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (f) readFile(f, (text) => {
+      try {
+        const d = JSON.parse(text.replace(/^\uFEFF/, ''));
+        if (!d || !Array.isArray(d.sites)) throw new Error('不是本站点管理器的工程文件');
+        state.sites = d.sites.map(normalizeSite);
+        if (d.meta) state.meta = Object.assign(clone(DEFAULT_META), d.meta);
+        if (d.sections) state.sections = Object.assign(clone(DEFAULT_SECTIONS), d.sections);
+        state.secBad = {};
+        afterChange(true);
+        toast('已导入工程（' + state.sites.length + ' 个站点）', 'ok');
+      } catch (err) {
+        toast('导入失败：' + err.message, 'error');
+      }
+    });
+    e.target.value = '';
+  });
+
+  // 标签页
+  $('#tabs').addEventListener('click', (e) => {
+    const t = e.target.closest('.tab');
+    if (!t) return;
+    state.tab = t.dataset.tab;
+    $$('#tabs .tab').forEach((x) => x.classList.toggle('active', x === t));
+    renderCode();
+  });
+
+  $('#btn-copy').addEventListener('click', async () => {
+    const def = TAB_DEFS[state.tab] || TAB_DEFS.index;
+    const ok = await copyText(def.gen());
+    toast(ok ? '已复制 ' + def.name : '复制失败，请手动选择文本复制', ok ? 'ok' : 'error');
+  });
+
+  $('#btn-download').addEventListener('click', () => {
+    const def = TAB_DEFS[state.tab] || TAB_DEFS.index;
+    download(def.file, def.gen());
+    toast('已下载 ' + def.file, 'ok');
+  });
+
+  // 列表：输入 / 勾选
+  const onField = (e) => {
+    const t = e.target;
+    if (!t.dataset || t.dataset.f === undefined || t.dataset.i === undefined) return;
+    const i = Number(t.dataset.i);
+    const s = state.sites[i];
+    if (!s) return;
+    const f = t.dataset.f;
+    if (t.type === 'checkbox') s[f] = t.checked;
+    else if (f === 'timeout') s[f] = Number(t.value) || 0;
+    else s[f] = t.value;
+    if (f === 'key') {
+      // key 改了就同步文件名（如果文件名还是旧 key 拼的）
+      const oldFile = t.dataset.oldKey ? t.dataset.oldKey + '.js' : '';
+      if (oldFile && s.file === oldFile) {
+        s.file = s.key + '.js';
+        const fi = listEl.querySelector('input[data-i="' + i + '"][data-f="file"]');
+        if (fi) fi.value = s.file;
+      }
+      t.dataset.oldKey = s.key;
+    }
+    save();
+    updateCardMeta(i);
+    renderValidBadges();
+    renderValidation();
+    renderCode();
+  };
+  listEl.addEventListener('input', onField);
+  listEl.addEventListener('change', onField);
+  listEl.addEventListener('input', (e) => {
+    const t = e.target;
+    if (!t.classList || !t.classList.contains('sheet') || t.dataset.ci === undefined) return;
+    previewCardPaste(Number(t.dataset.ci));
+  });
+
+  // 域名失焦时规范化
+  listEl.addEventListener('focusout', (e) => {
+    const t = e.target;
+    if (!t.dataset || t.dataset.f !== 'url') return;
+    const i = Number(t.dataset.i);
+    const s = state.sites[i];
+    if (!s) return;
+    const v = normUrl(t.value);
+    if (v && v !== t.value) { s.url = v; t.value = v; save(); updateCardMeta(i); renderValidBadges(); renderCode(); }
+  });
+
+  // 列表：操作按钮
+  listEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    const i = Number(btn.dataset.i);
+    const act = btn.dataset.act;
+    if (act === 'up' && i > 0) {
+      const tmp = state.sites[i - 1]; state.sites[i - 1] = state.sites[i]; state.sites[i] = tmp;
+      afterChange(true);
+    } else if (act === 'down' && i < state.sites.length - 1) {
+      const tmp = state.sites[i + 1]; state.sites[i + 1] = state.sites[i]; state.sites[i] = tmp;
+      afterChange(true);
+    } else if (act === 'copy') {
+      const s = state.sites[i];
+      if (!s) return;
+      const text = JSON.stringify(siteToConfig(s), null, 2);
+      copyText(text).then((ok) => {
+        toast(ok
+          ? '已把「' + (s.key || s.name || '这个站') + '」的 JSON 复制到剪贴板'
+          : '复制失败：浏览器不允许写剪贴板，点「重试」用兜底方式', ok ? 'ok' : 'error', ok ? null : {
+            label: '重试',
+            fn: () => {
+              const ta = document.createElement('textarea');
+              ta.value = text;
+              ta.style.position = 'fixed'; ta.style.opacity = '0';
+              document.body.appendChild(ta); ta.select();
+              try { document.execCommand('copy'); toast('已用兜底方式复制', 'ok'); }
+              catch (e) { toast('还是复制不了，请手动选中 JSON 复制', 'error'); }
+              ta.remove();
+            },
+          });
+      });
+    } else if (act === 'paste') {
+      openCardPaste(i);
+    } else if (act === 'paste-apply') {
+      applyCardPaste(i);
+    } else if (act === 'paste-clip') {
+      readClipInto(i);
+    } else if (act === 'paste-cancel') {
+      toggleCardPaste(i, false);
+    } else if (act === 'del') {
+      armConfirm(btn, '确认删除', () => {
+        const victim = state.sites[i];
+        const label = victim ? (victim.name || victim.key || '这家站') : '这家站';
+        undoPrev = snapshotSites();
+        state.sites.splice(i, 1);
+        afterChange(true);
+        undoToast('已删除「' + label + '」');
+      });
+    }
+  });
+
+  // 导入：文件
+  bindFile('#f-config', (t) => applyConfigText(t));
+  bindFile('#f-vodphp', (t) => applyVodPhp(t));
+  bindFile('#f-sitetxt', (t) => applySiteTxt(t));
+  bindFile('#f-serverjs', (t) => applyServerSites(t));
+
+  $('#btn-paste-import').addEventListener('click', () => {
+    const text = $('#paste-area').value;
+    if (!text.trim()) { toast('粘贴框是空的', 'error'); return; }
+    detectAndImport(text);
+  });
+
+  $('#btn-fetch-config').addEventListener('click', () => fetchLocal('./index.html', applyConfigText));
+
+  // 配置项：顶部字段
+  $('#cfg-meta').addEventListener('input', (e) => {
+    const k = e.target.dataset && e.target.dataset.meta;
+    if (!k) return;
+    state.meta[k] = e.target.value;
+    save();
+    renderCode();
+    if (k === 'logo' || k === 'wallpaper') updateImgPreview(k);
+  });
+
+  $('#btn-cfg-default').addEventListener('click', (e) => {
+    armConfirm(e.currentTarget, '确认恢复默认配置', () => {
+      withUndo('已恢复默认配置项', () => {
+        state.meta = clone(DEFAULT_META);
+        state.sections = clone(DEFAULT_SECTIONS);
+        state.secBad = {};
+      });
+    });
+  });
+
+  // 配置段：textarea 编辑 + 格式化 / 清空
+  $('#cfg-editors').addEventListener('input', (e) => {
+    const key = e.target.dataset && e.target.dataset.secbox;
+    if (!key) return;
+    const raw = e.target.value;
+    try {
+      const v = parseLooseJson(raw);
+      if (!Array.isArray(v)) throw new Error('顶层必须是数组');
+      state.sections[key] = v;
+      delete state.secBad[key];
+    } catch (err) {
+      state.secBad[key] = raw;
+    }
+    refreshSecStatus(key);
+    save();
+    renderValidation();
+    renderCode();
+  });
+
+  $('#cfg-editors').addEventListener('click', (e) => {
+    const fmt = e.target.closest('button[data-fmt]');
+    const clr = e.target.closest('button[data-clr]');
+    if (fmt) {
+      const key = fmt.dataset.fmt;
+      const v = state.sections[key];
+      if (!Array.isArray(v)) { toast('JSON 无效，先修好再格式化', 'error'); return; }
+      const box = document.querySelector('.jed[data-sec="' + key + '"] textarea');
+      box.value = JSON.stringify(v, null, 2);
+      toast('已格式化 ' + key, 'ok');
+      return;
+    }
+    if (clr) {
+      const key = clr.dataset.clr;
+      state.sections[key] = [];
+      delete state.secBad[key];
+      renderEditors();
+      save();
+      renderValidation();
+      renderCode();
+      toast('已清空 ' + key, 'ok');
+    }
+  });
+
+  // 粘贴站点
+  $('#btn-paste-site').addEventListener('click', () => {
+    const sec = $('#pastesite-sec');
+    sec.open = true;
+    sec.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    $('#pastesite-area').focus();
+    renderPasteSites();
+  });
+  $('#pastesite-area').addEventListener('input', renderPasteSites);
+  $('#pastesite-area').addEventListener('paste', () => setTimeout(renderPasteSites, 0));
+  $('#btn-pastesite-add').addEventListener('click', () => applyPastedSites(false));
+  $('#btn-pastesite-replace').addEventListener('click', () => applyPastedSites(true));
+  $('#btn-pastesite-clear').addEventListener('click', () => {
+    $('#pastesite-area').value = '';
+    renderPasteSites();
+  });
+  $('#btn-pastesite-clip').addEventListener('click', async () => {
+    try {
+      const t = await navigator.clipboard.readText();
+      if (!String(t || '').trim()) { toast('剪贴板是空的', 'error'); return; }
+      $('#pastesite-area').value = t;
+      renderPasteSites();
+      toast('已从剪贴板读入', 'ok');
+    } catch (e) {
+      toast('读不到剪贴板（' + (e && e.message ? e.message : '无权限') + '），点文本框按 Ctrl+V 粘贴', 'error');
+    }
+  });
+
+  // 批量添加
+  $('#btn-batch-add').addEventListener('click', () => {
+    const text = $('#batch-area').value;
+    if (!text.trim()) { toast('批量框是空的', 'error'); return; }
+    const list = parseBatch(text);
+    if (!list.length) { toast('没解析出站点，检查下格式', 'error'); return; }
+    if ($('#batch-replace').checked) state.sites = list;
+    else state.sites = state.sites.concat(list);
+    afterChange(true);
+    toast('已添加 ' + list.length + ' 个站点', 'ok');
+  });
+}
+
+function bindFile(sel, handler) {
+  const el = $(sel);
+  el.addEventListener('change', (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (f) readFile(f, handler);
+    e.target.value = '';
+  });
+}
+
+function readFile(file, cb) {
+  const fr = new FileReader();
+  fr.onload = () => cb(String(fr.result || ''));
+  fr.onerror = () => toast('读文件失败', 'error');
+  fr.readAsText(file, 'utf-8');
+}
+
+async function fetchLocal(path, handler) {
+  try {
+    const res = await fetch(path, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    if (!text || text.length < 20) throw new Error('内容太短');
+    handler(text);
+    toast('已从当前目录读取 ' + path, 'ok');
+  } catch (e) {
+    toast('拉取失败：' + e.message + '。用「选文件」或粘贴的方式吧', 'error');
+  }
+}
+
+/* ------------------------------ 导入逻辑 ------------------------------ */
+
+function applyVodPhp(text) {
+  const sites = parseVodPhp(text);
+  if (!sites.length) { toast('没从 vod.php 里解析出站点，检查下内容', 'error'); return; }
+  const doIt = () => { state.sites = sites; };
+  if (state.sites.length) {
+    withUndo('已导入 vod.php：' + sites.length + ' 个站点（覆盖了原来的 ' + state.sites.length + ' 个）', doIt);
+  } else {
+    doIt();
+    afterChange(true);
+    toast('已导入 vod.php：' + sites.length + ' 个站点', 'ok');
+  }
+}
+
+function applySiteTxt(text) {
+  const rows = parseSiteTxt(text);
+  if (!rows.length) { toast('没从 site.txt 里解析出 key=域名', 'error'); return; }
+  let added = 0, updated = 0;
+  for (const r of rows) {
+    const hit = state.sites.find((s) => s.key.toLowerCase() === r.key);
+    if (hit) {
+      hit.url = r.url;
+      if (!hit.comment && r.comment) hit.comment = r.comment;
+      updated++;
+    } else {
+      state.sites.push(normalizeSite({ key: r.key, name: r.key, file: r.key + '.js', url: r.url, timeout: 20, comment: r.comment, enabled: true }));
+      added++;
+    }
+  }
+  afterChange(true);
+  toast('site.txt：更新 ' + updated + ' 个、新增 ' + added + ' 个', 'ok');
+}
+
+function applyServerSites(text) {
+  const map = parseServerSites(text);
+  const keys = Object.keys(map);
+  if (!keys.length) { toast('没从 server.js 里解析出 SITES 条目', 'error'); return; }
+  let updated = 0, added = 0;
+  for (const k of keys) {
+    const src = map[k];
+    let hit = state.sites.find((s) => s.key.toLowerCase() === k.toLowerCase());
+    if (hit) {
+      if (src.url) hit.url = src.url;
+      if (src.keyword) hit.keyword = src.keyword;
+      if (src.ownDir) { hit.ownDir = true; hit.dir = ''; }
+      else if (src.dir) { hit.ownDir = false; hit.dir = src.dir; }
+      if (src.timeout) hit.timeout = src.timeout;
+      if (!hit.comment && src.comment) hit.comment = src.comment;
+      updated++;
+    } else {
+      state.sites.push(normalizeSite(src));
+      added++;
+    }
+  }
+  afterChange(true);
+  toast('server.js：更新 ' + updated + ' 个、新增 ' + added + ' 个', 'ok');
+}
+
+function applyConfigText(text) {
+  let obj;
+  try { obj = parseLooseJson(text); }
+  catch (e) { toast('不是合法 JSON：' + e.message, 'error'); return; }
+  const parsed = parseConfig(obj);
+  const hasSec = Object.keys(parsed.sections).length;
+  if (!parsed.sites.length && !hasSec) { toast('这段内容里没有 sites 或配置段', 'error'); return; }
+  const doIt = () => {
+    if (parsed.sites.length) state.sites = parsed.sites;
+    if (Object.keys(parsed.meta).length) state.meta = Object.assign(clone(DEFAULT_META), parsed.meta);
+    for (const k of Object.keys(parsed.sections)) state.sections[k] = parsed.sections[k];
+    state.secBad = {};
+  };
+  const label = (parsed.sites.length ? parsed.sites.length + ' 个站点' : '') +
+    (hasSec ? (parsed.sites.length ? '、' : '') + hasSec + ' 个配置段' : '');
+  if (state.sites.length && parsed.sites.length) {
+    withUndo('已导入配置：' + label + '（覆盖了原来的 ' + state.sites.length + ' 个站点）', doIt);
+  } else {
+    doIt();
+    afterChange(true);
+    toast('已导入配置：' + label, 'ok');
+  }
+}
+
+function detectAndImport(text) {
+  const t = String(text);
+  const first = t.replace(/^\uFEFF/, '').trim();
+  if (/^\s*[\[{]/.test(first)) return applyConfigText(t);
+  if (/\$defaults\s*=\s*\[/.test(t) || /\$rows\s*=\s*\[/.test(t)) return applyVodPhp(t);
+  if (/SITES\s*=/.test(t) || /key:\s*"[^"]+"/.test(t)) return applyServerSites(t);
+  if (/^[\w.-]+\s*=\s*https?:\/\//m.test(t) || /^[\w.-]+\s*=\s*[a-z0-9.-]+\.[a-z]{2,}/mi.test(t)) return applySiteTxt(t);
+  toast('没认出这段内容的类型（支持 index.html 配置 JSON / 旧 vod.php / site.txt / server.js）', 'error');
+}
+
+/* ------------------------------ 收尾 ------------------------------ */
+
+function afterChange(full) {
+  if (full) {
+    renderList();
+    renderMeta();
+    renderEditors();
+  }
+  renderValidation();
+  renderValidBadges();
+  renderCode();
+  save();
+  $('#site-count').textContent = state.sites.length;
+}
+
+function init() {
+  const restored = loadSaved();
+  renderList();
+  renderMeta();
+  renderEditors();
+  renderValidation();
+  renderCode();
+  bindEvents();
+  if (restored) toast('已恢复上次编辑的内容', 'ok');
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
