@@ -1,5 +1,5 @@
 /**
- * 晚安影视 · 六站合集本地测试服务
+ * 晚安影视 · 多站合集本地测试服务
  * ------------------------------------------------------------------
  * 零依赖，只用 Node 内置模块。
  *
@@ -95,17 +95,6 @@ const SITES = [
     keyword: "吞噬星空",
   },
   {
-    // 特狗影视：后端 vr2.tegouzj.cloud（tcpdump 抓 TLS SNI 确认，MacCMS 结构）
-    // 当前被 Cloudflare 依 DMCA 裁定返回 451，全站下架；恢复/换镜像改 TEGOU_SITE 或 site.txt
-    key: "tegou",
-    name: "特狗影视",
-    file: "tegou.js",
-    src: path.join(__dirname, "js", "tegou.js"),
-    origin: path.join(__dirname, "js", "tegou.js"), // 只在合集里维护，无独立源目录
-    api: (process.env.TEGOU_SITE || "https://vr2.tegouzj.cloud").replace(/\/+$/, ""),
-    keyword: "庆余年",
-  },
-  {
     // 樱花影视：MacCMS v10 HTML，官方 JSON 接口 404，只能抓页面
     // 换镜像域名改 TIAOZHANJIA_SITE 或 site.txt
     key: "tiaozhanjia",
@@ -115,6 +104,28 @@ const SITES = [
     origin: path.join(__dirname, "js", "tiaozhanjia.js"), // 只在合集里维护，无独立源目录
     api: (process.env.TIAOZHANJIA_SITE || "https://www.tiaozhanjia.com").replace(/\/+$/, ""),
     keyword: "功夫",
+  },
+  {
+    // 全能影视：/api.php 关闭，但站内 /api/show/v2/* 开放，直连 JSON 接口
+    // 换镜像域名改 PBSTORE_SITE 或 site.txt
+    key: "pbstore",
+    name: "全能影视",
+    file: "pbstore.js",
+    src: path.join(__dirname, "js", "pbstore.js"),
+    origin: path.join(__dirname, "js", "pbstore.js"), // 只在合集里维护，无独立源目录
+    api: (process.env.PBSTORE_SITE || "https://www.pb-store.com").replace(/\/+$/, ""),
+    keyword: "庆余年",
+  },
+  {
+    // 丝粒影视：MacCMS 标准接口开放（/api.php/provide/vod/ 直出 JSON），直接消费 JSON，无 cookie、无需抓页
+    // 换镜像域名改 SILIDM_SITE 或 site.txt
+    key: "silidm",
+    name: "丝粒影视",
+    file: "silidm.js",
+    src: path.join(__dirname, "js", "silidm.js"),
+    origin: path.join(__dirname, "..", "silidm", "js", "silidm.js"),
+    api: (process.env.SILIDM_SITE || "https://silidm.com").replace(/\/+$/, ""),
+    keyword: "庆余年",
   },
 ];
 
@@ -303,7 +314,7 @@ function drift() {
 function selfTest() {
   const t0 = Date.now();
   // 关键词各站取一个大概率有结果的（nfg 是聚合导航，用动画片名更稳）
-  const KW = { guobayu: "庆余年", cupfox7: "庆余年", mahuabox: "庆余年", nfg: "凡人修仙传" };
+  const KW = { guobayu: "庆余年", cupfox7: "庆余年", mahuabox: "庆余年", nfg: "凡人修仙传", silidm: "庆余年" };
   const sites = {};
   let ok = true;
   for (const site of SITES) {
@@ -465,7 +476,7 @@ function previewPage(url) {
   ).join("");
 
   const head = `<header><div class="row">
-      <b>六站合集 · 数据预览</b>${siteTabs}
+      <b>多站合集 · 数据预览</b>${siteTabs}
       <span style="width:1px;height:18px;background:#e5e7eb"></span>
       <a class="tab ${!tid && !kw ? "on" : ""}" href="/preview?site=${site.key}">首页</a>
       ${classTabs
@@ -539,15 +550,15 @@ const server = http.createServer((req, res) => {
 
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
     return res.end(
-      `<meta charset="utf-8"><title>六站合集 · 本地服务</title>
+      `<meta charset="utf-8"><title>多站合集 · 本地服务</title>
        <style>body{font:14px/1.7 system-ui;max-width:820px;margin:40px auto;padding:0 16px;color:#222}
        code{background:#f4f4f5;padding:2px 6px;border-radius:4px}a{color:#185fa5}
        table{border-collapse:collapse;margin:8px 0}td,th{border:1px solid #e5e7eb;padding:4px 10px;font-size:13px;text-align:left}
        th{background:#fafafa}</style>
-       <h3>六站合集 · 本地服务</h3>
-       <p>配置地址（填进 App，一个链接六个站）：<code>http://${req.headers.host}/vod.json</code></p>
+       <h3>多站合集 · 本地服务</h3>
+       <p>配置地址（填进 App，一个链接多站）：<code>http://${req.headers.host}/vod.json</code></p>
        <p><b>数据预览：<a href="/preview">/preview</a></b>（右上角切站，可看首页 / 分类 / 详情 / 选集）</p>
-       <p>全链路自检：<a href="/selftest">/selftest</a>（六个站各跑一遍 home → 分类 → 详情 → 播放 → 搜索）</p>
+       <p>全链路自检：<a href="/selftest">/selftest</a>（多站各跑一遍 home → 分类 → 详情 → 播放 → 搜索）</p>
 
        <h4>上传清单（这个目录里除 server.js / README.md 外都要传）</h4>
        <table>
@@ -586,7 +597,7 @@ server.listen(current, "0.0.0.0", () => {
     .flat()
     .filter((n) => n && n.family === "IPv4" && !n.internal)
     .map((n) => n.address);
-  console.log("六站合集 · 本地服务已启动");
+  console.log("多站合集 · 本地服务已启动");
   console.log(`  本机：  http://127.0.0.1:${port}/vod.json`);
   ips.forEach((ip) => console.log(`  局域网：http://${ip}:${port}/vod.json`));
   console.log(`  预览：  http://127.0.0.1:${port}/preview`);
