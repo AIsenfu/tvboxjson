@@ -1,0 +1,24 @@
+{
+  "spider": "",
+  "wallpaper": "https://imgs.catvod.com/",
+  "logo": "https://free.picui.cn/free/2026/01/23/697263f75f59c.gif",
+  "sites": [
+    {
+      "key": "kanav",
+      "name": "KanAV",
+      "type": 3,
+      "api": "./js/kanav.js",
+      "timeout": 25,
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1,
+      "changeable": 1
+    }
+  ],
+  "parses": [],
+  "doh": [],
+  "rules": [],
+  "ads": [],
+  "lives": [],
+  "headers": []
+}
